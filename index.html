@@ -60,33 +60,39 @@
             align-items: center;
             background-color: var(--primary-color);
             color: var(--text-light);
-            padding: 15px;
+            padding: 8px 10px;
             z-index: 10;
             box-shadow: var(--shadow);
+            min-height: 40px;
         }
         
         .app-title {
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: bold;
         }
         
         .header-actions {
             display: flex;
-            gap: 10px;
+            gap: 5px;
         }
-        
+       
+        .header.collapsed {
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+        }
+
         .header-btn {
             background: rgba(255, 255, 255, 0.2);
             border: none;
             color: white;
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 18px;
+            font-size: 14px;
         }
         
         .header-btn:hover {
@@ -1027,6 +1033,31 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
     
     <script>
+
+        // Add to your existing scripts - this makes the header hide when scrolling down
+        // and reappear when scrolling up (optional feature)
+        document.addEventListener('DOMContentLoaded', function() {
+          const header = document.querySelector('.header');
+          let lastScrollTop = 0;
+        
+          // Only enable on mobile devices where space is most limited
+          if (window.innerWidth < 768) {
+            window.addEventListener('scroll', function() {
+              let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+              if (scrollTop > lastScrollTop && scrollTop > 60) {
+                // Scrolling down & past header - hide it
+                header.classList.add('collapsed');
+              } else {
+                // Scrolling up - show it
+                header.classList.remove('collapsed');
+              }
+              
+              lastScrollTop = scrollTop;
+            }, false);
+          }
+        });
+
         document.addEventListener('DOMContentLoaded', async () => {
             // IndexedDB Storage Manager Class
             class ChatStorageManager {
@@ -1697,7 +1728,20 @@
             const activeCallBanner = document.getElementById('active-call-banner');
             const activeCallInfo = document.getElementById('active-call-info');
             const endCallButton = document.getElementById('end-call-btn');
-        
+       
+            // Browser Compatibility Check
+            function checkBrowserCompatibility() {
+              if (!window.RTCPeerConnection) {
+                showToast('Your browser does not support WebRTC. Try Chrome, Firefox, or Edge.', 'error');
+                return false;
+              }
+              return true;
+            }
+            if (!checkBrowserCompatibility()) {
+              console.error('Browser incompatible with WebRTC');
+              // Still continue with initialization as some features may still work
+            }
+
             // Create a home button for the header
             const homeButton = document.createElement('button');
             homeButton.className = 'header-btn';
@@ -2080,7 +2124,18 @@
             
             // Initialize PeerJS connection
             function initializePeerConnection() {
-                peer = new Peer();
+                peer = new Peer({
+                  config: {
+                    'iceServers': [
+                      { urls: 'stun:stun.l.google.com:19302' },
+                      { urls: 'stun:stun1.l.google.com:19302' },
+                      { urls: 'stun:stun2.l.google.com:19302' },
+                      { urls: 'stun:stun3.l.google.com:19302' },
+                      { urls: 'stun:stun4.l.google.com:19302' }
+                    ]
+                  },
+                  debug: 3 // Set to 3 for maximum debugging info
+                });
                 
                 peer.on('open', (id) => {
                     myId = id;
@@ -2193,10 +2248,24 @@
                     voiceCallManager.handleIncomingCall(call);
                 });
                 
-                peer.on('error', (err) => {
-                    console.error('PeerJS error:', err);
-                    updateConnectionStatus('Connection Error', false);
-                    showToast('Network connection error', 'error');
+                peer.on('error', function(err) {
+                  console.error('PeerJS error:', err);
+
+                  // Provide user-friendly error messages
+                  let errorMessage = 'Connection error';
+
+                  if (err.type === 'peer-unavailable') {
+                    errorMessage = 'User ID not found or user offline';
+                  } else if (err.type === 'network') {
+                    errorMessage = 'Network connection issues';
+                  } else if (err.type === 'server-error') {
+                    errorMessage = 'PeerJS server error';
+                  } else if (err.type === 'webrtc') {
+                    errorMessage = 'WebRTC connection failed';
+                  }
+
+                  updateConnectionStatus('Connection Error', false);
+                  showToast(errorMessage, 'error');
                 });
                 
                 peer.on('disconnected', () => {
@@ -2304,10 +2373,35 @@
                 }
                 
                 try {
-                    const conn = peer.connect(peerId);
-                    connections[peerId] = conn;
-                    setupConnectionHandlers(conn);
                     showToast('Connecting...', 'info');
+    
+                    // Add connection timeout
+                    const connectionTimeout = setTimeout(() => {
+                      if (!connections[peerId] || connections[peerId].open === false) {
+                        showToast('Connection timed out. Try again or check the ID', 'error');
+                      }
+                    }, 15000); // 15 seconds timeout
+    
+                    const conn = peer.connect(peerId, {
+                      reliable: true,
+                      serialization: 'json'
+                    });
+
+                    connections[peerId] = conn;
+
+                    // Add additional error handling
+                    conn.on('open', function() {
+                      clearTimeout(connectionTimeout);
+                      showToast('Connected successfully!', 'success');
+                      setupConnectionHandlers(conn);
+                    });
+
+                    conn.on('error', function(err) {
+                      clearTimeout(connectionTimeout);
+                      console.error('Connection error:', err);
+                      showToast('Connection error: ' + err, 'error');
+                      delete connections[peerId];
+                    });
                 } catch (error) {
                     console.error('Error connecting to peer:', error);
                     showToast('Failed to connect', 'error');
