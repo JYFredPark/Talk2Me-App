@@ -1,0 +1,2488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#3498db">
+    <title>TalkWorld - Multilingual Communication</title>
+    
+    <!-- PWA manifest for mobile installation -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRhbGtXb3JsZCIsCiAgInNob3J0X25hbWUiOiAiVGFsa1dvcmxkIiwKICAidGhlbWVfY29sb3IiOiAiIzM0OThkYiIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2ZmZmZmZiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgInN0YXJ0X3VybCI6ICIuLyIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjNhV1IwYUQwaU1UQXdJaUJvWldsbmFIUTlJakV3TUNJZ2RtbGxkMEp2ZUQwaU1DQXdJREV3TUNBeE1EQWlJSGh0Ykc1elBTSm9kSFJ3T2k4dmQzZDNMbmN6TG05eVp5OHlNREF3TDNOMlp5SStQR05wY21Oc1pTQnphV1p5YjIwOUluVnliR3hoS0NrZ2NYVmxjbmxCYm1jdlVtVmphWEJsUmlBeUlpQm1hV3hzUFNJak16UTVPRVJpSWk4K1BDOXpkbWMrIiwKICAgICAgInNpemVzIjogIjE5MngxOTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9zdmcreG1sIgogICAgfQogIF0KfQ==">
+    
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --accent-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #f5f5f5;
+            --dark-bg: #2c3e50;
+            --panel-bg: #34495e;
+            --text-light: #ffffff;
+            --text-dark: #333333;
+            --message-sent: #3498db;
+            --message-received: #e9e9e9;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            overscroll-behavior: none; /* Prevents pull-to-refresh on mobile */
+        }
+        
+        /* Mobile-first approach */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            padding: 15px;
+            z-index: 10;
+            box-shadow: var(--shadow);
+        }
+        
+        .app-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .header-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Main content area */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            left: -100%;
+            top: 0;
+            transition: left 0.3s ease;
+            z-index: 5;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .sidebar.open {
+            left: 0;
+        }
+        
+        .sidebar-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .panel {
+            background-color: var(--panel-bg);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .panel-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .panel-title h2 {
+            font-size: 1.2rem;
+            margin: 0;
+        }
+        
+        .panel-content {
+            margin-bottom: 10px;
+        }
+        
+        /* Connection panel */
+        .connection-id {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 5px 0 10px;
+            overflow: auto;
+            word-break: break-all;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .status-indicator.connected {
+            background-color: var(--secondary-color);
+        }
+        
+        .status-indicator.disconnected {
+            background-color: var(--danger-color);
+        }
+        
+        /* Contacts panel */
+        .contacts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .contact {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+        
+        .contact:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .contact-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .contact-info {
+            flex: 1;
+        }
+        
+        .contact-language {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        
+        .contact-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .contact-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .call-btn {
+            background-color: var(--secondary-color);
+            color: var(--text-light);
+        }
+        
+        .end-btn {
+            background-color: var(--danger-color);
+            color: var(--text-light);
+        }
+        
+        /* Chat area */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            height: 100%;
+            position: relative;
+        }
+        
+        .active-call-banner {
+            background-color: var(--secondary-color);
+            color: var(--text-light);
+            padding: 10px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            display: none;
+        }
+        
+        .active-call-banner.visible {
+            display: flex;
+        }
+        
+        .end-call-btn {
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: var(--light-bg);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+            position: relative;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .message.sent {
+            background-color: var(--message-sent);
+            color: var(--text-light);
+            align-self: flex-end;
+        }
+        
+        .message.received {
+            background-color: var(--message-received);
+            color: var(--text-dark);
+            align-self: flex-start;
+        }
+        
+        .sender-name {
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .original-text {
+            font-style: italic;
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-top: 5px;
+            display: block;
+        }
+        
+        .timestamp {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .date-divider {
+            align-self: center;
+            margin: 15px 0;
+            position: relative;
+            width: 80%;
+            text-align: center;
+        }
+        
+        .date-divider:before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: #ddd;
+            z-index: 0;
+        }
+        
+        .date-divider span {
+            background-color: var(--light-bg);
+            padding: 0 10px;
+            position: relative;
+            z-index: 1;
+            color: #888;
+            font-size: 0.8rem;
+        }
+        
+        .input-area {
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            background-color: white;
+            border-top: 1px solid #eee;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            font-size: 1rem;
+            margin-right: 10px;
+        }
+        
+        .send-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        
+        .mic-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            background-color: var(--secondary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            margin-right: 10px;
+        }
+        
+        .mic-btn.active {
+            background-color: var(--danger-color);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        /* Form elements styling */
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input, button, select, textarea {
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+            margin-bottom: 10px;
+        }
+        
+        option {
+            background-color: var(--dark-bg);
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button.secondary {
+            background-color: var(--secondary-color);
+        }
+        
+        button.secondary:hover {
+            background-color: #27ae60;
+        }
+        
+        button.danger {
+            background-color: var(--danger-color);
+        }
+        
+        button.danger:hover {
+            background-color: #c0392b;
+        }
+        
+        /* Modal */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        
+        .modal-backdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal {
+            background-color: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow);
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        
+        .modal-backdrop.active .modal {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 1.2rem;
+            margin: 0;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .modal-body {
+            padding: 20px;
+            color: var(--text-dark);
+        }
+        
+        .modal-footer {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .modal-form label {
+            color: var(--text-dark);
+            margin-top: 10px;
+        }
+        
+        .modal-form input, .modal-form select {
+            background-color: #f5f5f5;
+            color: var(--text-dark);
+            border: 1px solid #ddd;
+        }
+        
+        /* Incoming call modal */
+        .call-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+        }
+        
+        .call-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+        
+        .call-name {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .call-status {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .call-actions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .accept-call {
+            background-color: var(--secondary-color);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+        }
+        
+        .reject-call {
+            background-color: var(--danger-color);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+        }
+        
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .toast {
+            padding: 15px 20px;
+            border-radius: 5px;
+            background-color: var(--dark-bg);
+            color: white;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transform: translateX(50px);
+            transition: opacity 0.3s, transform 0.3s;
+            max-width: 300px;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .toast.success {
+            background-color: var(--secondary-color);
+        }
+        
+        .toast.error {
+            background-color: var(--danger-color);
+        }
+        
+        .toast.info {
+            background-color: var(--primary-color);
+        }
+        
+        /* Desktop adjustments */
+        @media (min-width: 768px) {
+            .app-container {
+                flex-direction: row;
+            }
+            
+            .sidebar {
+                position: relative;
+                left: 0;
+                width: 300px;
+                box-shadow: var(--shadow);
+            }
+            
+            .sidebar-close {
+                display: none;
+            }
+            
+            .menu-btn {
+                display: none;
+            }
+        }
+        
+        /* Progressive Enhancement - Icons */
+        .icon {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            stroke-width: 0;
+            stroke: currentColor;
+            fill: currentColor;
+            line-height: 1;
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Mobile-friendly header -->
+        <header class="header">
+            <button class="header-btn menu-btn" id="menu-btn">≡</button>
+            <h1 class="app-title">TalkWorld</h1>
+            <div class="header-actions">
+                <button class="header-btn" id="add-contact-btn">+</button>
+                <button class="header-btn" id="settings-btn">⚙</button>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <!-- Sidebar with controls -->
+            <aside class="sidebar" id="sidebar">
+                <button class="sidebar-close" id="sidebar-close">×</button>
+                
+                <!-- Connection panel -->
+                <div class="panel">
+                    <div class="panel-title">
+                        <h2>Connection</h2>
+                    </div>
+                    <div class="panel-content">
+                        <div class="status">
+                            <div class="status-indicator disconnected" id="status-indicator"></div>
+                            <span id="connection-status">Disconnected</span>
+                        </div>
+                        
+                        <label for="your-id">Your Connection ID:</label>
+                        <div id="your-id" class="connection-id">Generating...</div>
+                        <button id="copy-id">Copy ID</button>
+                        
+                        <label for="your-name">Your Name:</label>
+                        <input type="text" id="your-name" placeholder="Enter your name">
+                    </div>
+                </div>
+                
+                <!-- Contacts panel -->
+                <div class="panel">
+                    <div class="panel-title">
+                        <h2>Contacts</h2>
+                    </div>
+                    <div class="panel-content">
+                        <div class="contacts-list" id="contacts-list">
+                            <!-- Contacts will be added dynamically -->
+                        </div>
+                        <button id="add-contact">Add Contact</button>
+                    </div>
+                </div>
+                
+                <!-- Language settings panel -->
+                <div class="panel">
+                    <div class="panel-title">
+                        <h2>Language</h2>
+                    </div>
+                    <div class="panel-content">
+                        <label for="my-language">Your Language:</label>
+                        <select id="my-language">
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                            <option value="it">Italian</option>
+                            <option value="pt">Portuguese</option>
+                            <option value="ru">Russian</option>
+                            <option value="zh">Chinese</option>
+                            <option value="ja">Japanese</option>
+                            <option value="ko">Korean</option>
+                            <option value="ar">Arabic</option>
+                            <option value="hi">Hindi</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Translation API panel -->
+                <div class="panel">
+                    <div class="panel-title">
+                        <h2>Translation API</h2>
+                    </div>
+                    <div class="panel-content">
+                        <label for="translation-service">Service:</label>
+                        <select id="translation-service">
+                            <option value="libre">LibreTranslate (Free, Limited)</option>
+                            <option value="google">Google Cloud Translation</option>
+                            <option value="microsoft">Microsoft Azure Translator</option>
+                        </select>
+                        
+                        <div id="api-key-container" style="display: none;">
+                            <label for="api-key">API Key:</label>
+                            <input type="password" id="api-key" placeholder="Enter API key">
+                        </div>
+                        
+                        <div id="ms-region-container" style="display: none;">
+                            <label for="ms-region">Azure Region:</label>
+                            <input type="text" id="ms-region" placeholder="e.g., eastus, westeurope">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Storage panel -->
+                <div class="panel">
+                    <div class="panel-title">
+                        <h2>Storage</h2>
+                    </div>
+                    <div class="panel-content">
+                        <div id="storage-stats">
+                            <div>Messages: Loading...</div>
+                            <div>Storage used: Loading...</div>
+                        </div>
+                        <div style="display: flex; gap: 5px; margin-top: 10px;">
+                            <button class="secondary" id="export-history">Export</button>
+                            <button class="danger" id="clear-history">Clear</button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- Main chat area -->
+            <main class="chat-area">
+                <!-- Active call banner -->
+                <div class="active-call-banner" id="active-call-banner">
+                    <span id="active-call-info">In call with Friend</span>
+                    <button class="end-call-btn" id="end-call-btn">End Call</button>
+                </div>
+                
+                <!-- Messages container -->
+                <div class="messages" id="messages-container">
+                    <!-- Welcome message -->
+                    <div class="date-divider">
+                        <span>Today</span>
+                    </div>
+                    <div class="message received">
+                        <div class="message-content">
+                            Welcome to TalkWorld! Add contacts and start chatting in multiple languages.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Input area -->
+                <div class="input-area">
+                    <button class="mic-btn" id="voice-btn">🎤</button>
+                    <input type="text" id="message-input" class="message-input" placeholder="Type your message...">
+                    <button class="send-btn" id="send-btn">➤</button>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Add Contact Modal -->
+    <div class="modal-backdrop" id="add-contact-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Contact</h3>
+                <button class="modal-close" id="add-contact-close">×</button>
+            </div>
+            <div class="modal-body">
+                <form class="modal-form" id="add-contact-form">
+                    <label for="contact-name">Name:</label>
+                    <input type="text" id="contact-name" placeholder="Friend's name" required>
+                    
+                    <label for="contact-id">Connection ID:</label>
+                    <input type="text" id="contact-id" placeholder="Paste connection ID" required>
+                    
+                    <label for="contact-language">Language:</label>
+                    <select id="contact-language">
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="it">Italian</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="ru">Russian</option>
+                        <option value="zh">Chinese</option>
+                        <option value="ja">Japanese</option>
+                        <option value="ko">Korean</option>
+                        <option value="ar">Arabic</option>
+                        <option value="hi">Hindi</option>
+                    </select>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" id="add-contact-cancel">Cancel</button>
+                <button id="add-contact-save">Add Contact</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Incoming Call Modal -->
+    <div class="modal-backdrop" id="incoming-call-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Incoming Call</h3>
+            </div>
+            <div class="modal-body">
+                <div class="call-info">
+                    <div class="call-avatar" id="caller-avatar">
+                        F
+                    </div>
+                    <div class="call-name" id="caller-name">Friend</div>
+                    <div class="call-status">is calling you...</div>
+                </div>
+                <div class="call-actions">
+                    <button class="reject-call" id="reject-call">✕</button>
+                    <button class="accept-call" id="accept-call">✓</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast notifications container -->
+    <div class="toast-container" id="toast-container">
+        <!-- Toasts will be added dynamically -->
+    </div>
+
+    <!-- Import PeerJS for WebRTC peer-to-peer connections -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // IndexedDB Storage Manager Class
+            class ChatStorageManager {
+                constructor() {
+                    this.dbName = 'TalkWorldDB';
+                    this.dbVersion = 1;
+                    this.messagesStore = 'messages';
+                    this.contactsStore = 'contacts';
+                    this.settingsStore = 'settings';
+                    this.db = null;
+                    this.initComplete = false;
+                    this.initPromise = this.initDB();
+                }
+    
+                // Initialize the database
+                async initDB() {
+                    return new Promise((resolve, reject) => {
+                        const request = indexedDB.open(this.dbName, this.dbVersion);
+                        
+                        request.onerror = (event) => {
+                            console.error('Error opening IndexedDB:', event.target.error);
+                            reject(event.target.error);
+                        };
+                        
+                        request.onupgradeneeded = (event) => {
+                            const db = event.target.result;
+                            
+                            // Create messages store with chatId index
+                            if (!db.objectStoreNames.contains(this.messagesStore)) {
+                                const messagesStore = db.createObjectStore(this.messagesStore, { keyPath: 'id', autoIncrement: true });
+                                messagesStore.createIndex('contactId', 'contactId', { unique: false });
+                                messagesStore.createIndex('timestamp', 'timestamp', { unique: false });
+                            }
+                            
+                            // Create contacts store
+                            if (!db.objectStoreNames.contains(this.contactsStore)) {
+                                db.createObjectStore(this.contactsStore, { keyPath: 'id' });
+                            }
+                            
+                            // Create settings store
+                            if (!db.objectStoreNames.contains(this.settingsStore)) {
+                                db.createObjectStore(this.settingsStore, { keyPath: 'id' });
+                            }
+                        };
+                        
+                        request.onsuccess = (event) => {
+                            this.db = event.target.result;
+                            this.initComplete = true;
+                            console.log('IndexedDB initialized successfully');
+                            resolve();
+                        };
+                    });
+                }
+    
+                // Wait for initialization to complete
+                async ensureInit() {
+                    if (!this.initComplete) {
+                        await this.initPromise;
+                    }
+                }
+    
+                // Add a contact
+                async addContact(contact) {
+                    await this.ensureInit();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction([this.contactsStore], 'readwrite');
+                        const store = transaction.objectStore(this.contactsStore);
+                        
+                        const request = store.put(contact);
+                        
+                        request.onsuccess = () => {
+                            resolve();
+                        };
+                        
+                        request.onerror = (event) => {
+                            console.error('Error adding contact:', event.target.error);
+                            reject(event.target.error);
+                        };
+                    });
+                }
+    
+                // Get all contacts
+                async getContacts() {
+                    await this.ensureInit();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction([this.contactsStore], 'readonly');
+                        const store = transaction.objectStore(this.contactsStore);
+                        const request = store.getAll();
+                        
+                        request.onsuccess = () => {
+                            resolve(request.result);
+                        };
+                        
+                        request.onerror = (event) => {
+                            console.error('Error getting contacts:', event.target.error);
+                            reject(event.target.error);
+                        };
+                    });
+                }
+    
+                // Get a contact by ID
+                async getContactById(id) {
+                    await this.ensureInit();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction([this.contactsStore], 'readonly');
+                        const store = transaction.objectStore(this.contactsStore);
+                        const request = store.get(id);
+                        
+                        request.onsuccess = () => {
+                            resolve(request.result);
+                        };
+                        
+                        request.onerror = (event) => {
+                            console.error('Error getting contact:', event.target.error);
+                            reject(event.target.error);
+                        };
+                    });
+                }
+    
+                // Remove a contact
+                async removeContact(id) {
+                    await this.ensureInit();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction([this.contactsStore], 'readwrite');
+                        const store = transaction.objectStore(this.contactsStore);
+                        const request = store.delete(id);
+                        
+                        request.onsuccess = () => {
+                            resolve();
+                        };
+                        
+                        request.onerror = (event) => {
+                            console.error('Error removing contact:', event.target.error);
+                            reject(event.target.error);
+                        };
+                    });
+                }
+    
+                // Add a message
+                async addMessage(message) {
+                    await this.ensureInit();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction([this.messagesStore], 'readwrite');
+                        const store = transaction.objectStore(this.messagesStore);
+                        
+                        const request = store.add(message);
+                        
+                        request.onsuccess = () => {
+                            resolve(request.result);
+                        };
+                        
+                        request.onerror = (event) => {
+                            console.error('Error adding message:', event.target.error);
+                            reject(event.target.error);
+                        };
+                    });
+                }
+    
+                // Get messages for a contact
+                async getMessagesByContactId(contactId) {
+                    await this.ensureInit();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction([this.messagesStore], 'readonly');
+                        const store = transaction.objectStore(this.messagesStore);
+                        const index = store.index('contactId');
+                        const request = index.getAll(IDBKeyRange.only(contactId));
+                        
+                        request.onsuccess = () => {
+                            const messages = request.result;
+                            messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                            resolve(messages);
+                        };
+                        
+                        request.onerror = (event) => {
+                            console.error('Error getting messages:', event.target.error);
+                            reject(event.target.error);
+                        };
+                    });
+                }
+    
+                // Clear messages for a contact
+                async clearMessagesByContactId(contactId) {
+                    await this.ensureInit();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction([this.messagesStore], 'readwrite');
+                        const store = transaction.objectStore(this.messagesStore);
+                        const index = store.index('contactId');
+                        const request = index.openKeyCursor(IDBKeyRange.only(contactId));
+                        
+                        request.onsuccess = (event) => {
+                            const cursor = event.target.result;
+                            if (cursor) {
+                                store.delete(cursor.primaryKey);
+                                cursor.continue();
+                            } else {
+                                resolve();
+                            }
+                        };
+                        
+                        request.onerror = (event) => {
+                            console.error('Error clearing messages:', event.target.error);
+                            reject(event.target.error);
+                        };
+                    });
+                }
+    
+                // Save settings
+                async saveSettings(settings) {
+                    await this.ensureInit();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction([this.settingsStore], 'readwrite');
+                        const store = transaction.objectStore(this.settingsStore);
+                        
+                        store.put({
+                            id: 'userSettings',
+                            ...settings
+                        });
+                        
+                        transaction.oncomplete = () => {
+                            resolve();
+                        };
+                        
+                        transaction.onerror = (event) => {
+                            console.error('Error saving settings:', event.target.error);
+                            reject(event.target.error);
+                        };
+                    });
+                }
+    
+                // Load settings
+                async loadSettings() {
+                    await this.ensureInit();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction([this.settingsStore], 'readonly');
+                        const store = transaction.objectStore(this.settingsStore);
+                        
+                        const request = store.get('userSettings');
+                        
+                        request.onsuccess = (event) => {
+                            resolve(event.target.result || {});
+                        };
+                        
+                        request.onerror = (event) => {
+                            console.error('Error loading settings:', event.target.error);
+                            reject(event.target.error);
+                        };
+                    });
+                }
+    
+                // Get database statistics
+                async getStorageStats() {
+                    await this.ensureInit();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction([this.messagesStore], 'readonly');
+                        const store = transaction.objectStore(this.messagesStore);
+                        
+                        const countRequest = store.count();
+                        let messageCount = 0;
+                        
+                        countRequest.onsuccess = () => {
+                            messageCount = countRequest.result;
+                        };
+                        
+                        transaction.oncomplete = () => {
+                            // Estimate size (rough calculation)
+                            const averageMessageSize = 500; // bytes
+                            const estimatedSize = messageCount * averageMessageSize;
+                            
+                            resolve({
+                                messageCount,
+                                estimatedSize,
+                                formattedSize: this.formatBytes(estimatedSize)
+                            });
+                        };
+                        
+                        transaction.onerror = (event) => {
+                            reject(event.target.error);
+                        };
+                    });
+                }
+    
+                // Format bytes to human-readable format
+                formatBytes(bytes) {
+                    if (bytes === 0) return '0 Bytes';
+                    
+                    const k = 1024;
+                    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    
+                    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                }
+    
+                // Export chat history for a contact
+                async exportChatHistory(contactId) {
+                    const contact = await this.getContactById(contactId);
+                    const messages = await this.getMessagesByContactId(contactId);
+                    
+                    const exportData = {
+                        contact,
+                        messages,
+                        exportedAt: new Date().toISOString()
+                    };
+                    
+                    const dataStr = JSON.stringify(exportData, null, 2);
+                    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+                    
+                    const exportFileDefaultName = `talkworld_chat_${contact.name}_${new Date().toISOString().split('T')[0]}.json`;
+                    
+                    const linkElement = document.createElement('a');
+                    linkElement.setAttribute('href', dataUri);
+                    linkElement.setAttribute('download', exportFileDefaultName);
+                    linkElement.click();
+                }
+            }
+    
+            // Create a global instance
+            const storageManager = new ChatStorageManager();
+    
+            // Voice call manager class
+            class VoiceCallManager {
+                constructor() {
+                    this.stream = null;
+                    this.calls = {};
+                    this.onCallReceived = null;
+                    this.onCallAccepted = null;
+                    this.onCallEnded = null;
+                    this.audioContext = null;
+                    this.speechRecognition = null;
+                    this.translationService = null;
+                }
+    
+                // Initialize speech recognition
+                initSpeechRecognition(language) {
+                    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                        showToast('Speech recognition not supported in this browser', 'error');
+                        return false;
+                    }
+                    
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    this.speechRecognition = new SpeechRecognition();
+                    this.speechRecognition.continuous = false;
+                    this.speechRecognition.interimResults = false;
+                    this.speechRecognition.lang = this.getLangCode(language);
+                    
+                    return true;
+                }
+    
+                // Set translation service
+                setTranslationService(service) {
+                    this.translationService = service;
+                }
+    
+                // Start voice input
+                startVoiceInput(language, callback) {
+                    if (!this.speechRecognition) {
+                        if (!this.initSpeechRecognition(language)) {
+                            return false;
+                        }
+                    }
+                    
+                    this.speechRecognition.lang = this.getLangCode(language);
+                    
+                    this.speechRecognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        callback(transcript);
+                    };
+                    
+                    this.speechRecognition.onerror = (event) => {
+                        console.error('Speech recognition error:', event.error);
+                        showToast('Error recognizing speech: ' + event.error, 'error');
+                    };
+                    
+                    this.speechRecognition.start();
+                    return true;
+                }
+    
+                // Stop voice input
+                stopVoiceInput() {
+                    if (this.speechRecognition) {
+                        try {
+                            this.speechRecognition.stop();
+                        } catch (e) {
+                            console.log('Speech recognition already stopped');
+                        }
+                    }
+                }
+    
+                // Get language code for speech recognition
+                getLangCode(shortCode) {
+                    const langMap = {
+                        'en': 'en-US',
+                        'es': 'es-ES',
+                        'fr': 'fr-FR',
+                        'de': 'de-DE',
+                        'it': 'it-IT',
+                        'pt': 'pt-BR',
+                        'ru': 'ru-RU',
+                        'zh': 'zh-CN',
+                        'ja': 'ja-JP',
+                        'ko': 'ko-KR',
+                        'ar': 'ar-SA',
+                        'hi': 'hi-IN'
+                    };
+                    
+                    return langMap[shortCode] || 'en-US';
+                }
+    
+                // Initialize for making/receiving calls
+                async init() {
+                    try {
+                        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        return true;
+                    } catch (e) {
+                        console.error('Error initializing audio context:', e);
+                        showToast('Error initializing voice call system', 'error');
+                        return false;
+                    }
+                }
+    
+                // Get user media (microphone)
+                async getUserMedia() {
+                    try {
+                        this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        return true;
+                    } catch (e) {
+                        console.error('Error getting user media:', e);
+                        showToast('Could not access microphone', 'error');
+                        return false;
+                    }
+                }
+    
+                // Make a call to a peer
+                async callPeer(peer, peerId) {
+                    if (!this.stream) {
+                        const success = await this.getUserMedia();
+                        if (!success) return false;
+                    }
+                    
+                    try {
+                        const call = peer.call(peerId, this.stream);
+                        this.setupCallHandlers(call);
+                        this.calls[peerId] = call;
+                        return true;
+                    } catch (e) {
+                        console.error('Error making call:', e);
+                        showToast('Error making call', 'error');
+                        return false;
+                    }
+                }
+    
+                // Setup call event handlers
+                setupCallHandlers(call) {
+                    call.on('stream', (remoteStream) => {
+                        // Create audio element for remote stream
+                        const audio = document.createElement('audio');
+                        audio.srcObject = remoteStream;
+                        audio.id = `audio-${call.peer}`;
+                        audio.autoplay = true;
+                        document.body.appendChild(audio);
+                        
+                        if (this.onCallAccepted) {
+                            this.onCallAccepted(call.peer);
+                        }
+                    });
+                    
+                    call.on('close', () => {
+                        // Remove audio element
+                        const audio = document.getElementById(`audio-${call.peer}`);
+                        if (audio) {
+                            audio.remove();
+                        }
+                        
+                        delete this.calls[call.peer];
+                        
+                        if (this.onCallEnded) {
+                            this.onCallEnded(call.peer);
+                        }
+                    });
+                    
+                    call.on('error', (err) => {
+                        console.error('Call error:', err);
+                        showToast('Call error: ' + err, 'error');
+                        
+                        // Remove audio element
+                        const audio = document.getElementById(`audio-${call.peer}`);
+                        if (audio) {
+                            audio.remove();
+                        }
+                        
+                        delete this.calls[call.peer];
+                        
+                        if (this.onCallEnded) {
+                            this.onCallEnded(call.peer);
+                        }
+                    });
+                }
+    
+                // Handle incoming call
+                handleIncomingCall(call) {
+                    if (this.onCallReceived) {
+                        this.onCallReceived(call.peer);
+                    }
+                    
+                    this.calls[call.peer] = call;
+                }
+    
+                // Accept an incoming call
+                async acceptCall(peerId) {
+                    const call = this.calls[peerId];
+                    
+                    if (!call) {
+                        showToast('Call no longer available', 'error');
+                        return false;
+                    }
+                    
+                    if (!this.stream) {
+                        const success = await this.getUserMedia();
+                        if (!success) return false;
+                    }
+                    
+                    try {
+                        call.answer(this.stream);
+                        this.setupCallHandlers(call);
+                        return true;
+                    } catch (e) {
+                        console.error('Error answering call:', e);
+                        showToast('Error answering call', 'error');
+                        return false;
+                    }
+                }
+    
+                // End a call
+                endCall(peerId) {
+                    const call = this.calls[peerId];
+                    
+                    if (call) {
+                        call.close();
+                        delete this.calls[peerId];
+                    }
+                    
+                    // Check if we have no more calls
+                    if (Object.keys(this.calls).length === 0) {
+                        // Stop microphone stream
+                        if (this.stream) {
+                            this.stream.getTracks().forEach(track => track.stop());
+                            this.stream = null;
+                        }
+                    }
+                }
+    
+                // End all calls
+                endAllCalls() {
+                    Object.keys(this.calls).forEach(peerId => {
+                        this.endCall(peerId);
+                    });
+                    
+                    // Stop microphone stream
+                    if (this.stream) {
+                        this.stream.getTracks().forEach(track => track.stop());
+                        this.stream = null;
+                    }
+                }
+            }
+            
+            // Toast notification function
+            function showToast(message, type = 'info', duration = 3000) {
+                const toastContainer = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                
+                toastContainer.appendChild(toast);
+                
+                // Force reflow to enable transition
+                toast.offsetHeight;
+                
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 300);
+                }, duration);
+            }
+    
+            // DOM elements
+            const sidebarElement = document.getElementById('sidebar');
+            const menuButton = document.getElementById('menu-btn');
+            const sidebarCloseButton = document.getElementById('sidebar-close');
+            const yourIdElement = document.getElementById('your-id');
+            const copyIdButton = document.getElementById('copy-id');
+            const yourNameInput = document.getElementById('your-name');
+            const addContactButton = document.getElementById('add-contact');
+            const addContactHeaderButton = document.getElementById('add-contact-btn');
+            const statusIndicator = document.getElementById('status-indicator');
+            const connectionStatus = document.getElementById('connection-status');
+            const myLanguageSelect = document.getElementById('my-language');
+            const translationServiceSelect = document.getElementById('translation-service');
+            const apiKeyContainer = document.getElementById('api-key-container');
+            const apiKeyInput = document.getElementById('api-key');
+            const msRegionContainer = document.getElementById('ms-region-container');
+            const msRegionInput = document.getElementById('ms-region');
+            const messageInput = document.getElementById('message-input');
+            const sendButton = document.getElementById('send-btn');
+            const messagesContainer = document.getElementById('messages-container');
+            const contactsList = document.getElementById('contacts-list');
+            const clearHistoryButton = document.getElementById('clear-history');
+            const exportHistoryButton = document.getElementById('export-history');
+            const storageStatsElement = document.getElementById('storage-stats');
+            const voiceButton = document.getElementById('voice-btn');
+            const activeCallBanner = document.getElementById('active-call-banner');
+            const activeCallInfo = document.getElementById('active-call-info');
+            const endCallButton = document.getElementById('end-call-btn');
+            
+            // Modal elements
+            const addContactModal = document.getElementById('add-contact-modal');
+            const addContactClose = document.getElementById('add-contact-close');
+            const addContactForm = document.getElementById('add-contact-form');
+            const contactNameInput = document.getElementById('contact-name');
+            const contactIdInput = document.getElementById('contact-id');
+            const contactLanguageSelect = document.getElementById('contact-language');
+            const addContactSave = document.getElementById('add-contact-save');
+            const addContactCancel = document.getElementById('add-contact-cancel');
+            
+            const incomingCallModal = document.getElementById('incoming-call-modal');
+            const callerAvatar = document.getElementById('caller-avatar');
+            const callerName = document.getElementById('caller-name');
+            const acceptCallButton = document.getElementById('accept-call');
+            const rejectCallButton = document.getElementById('reject-call');
+            
+            // State variables
+            let peer;
+            let myId;
+            let userName = 'Me';
+            const connections = {};
+            let activeContactId = null;
+            
+            // Initialize voice call manager
+            const voiceCallManager = new VoiceCallManager();
+            await voiceCallManager.init();
+            
+            // Set voice call event handlers
+            voiceCallManager.onCallReceived = (peerId) => {
+                // Find contact
+                storageManager.getContactById(peerId).then(contact => {
+                    if (contact) {
+                        callerName.textContent = contact.name;
+                        callerAvatar.textContent = contact.name.charAt(0);
+                    } else {
+                        callerName.textContent = 'Unknown';
+                        callerAvatar.textContent = '?';
+                    }
+                    
+                    // Show incoming call modal
+                    incomingCallModal.classList.add('active');
+                });
+            };
+            
+            voiceCallManager.onCallAccepted = (peerId) => {
+                // Find contact
+                storageManager.getContactById(peerId).then(contact => {
+                    if (contact) {
+                        activeCallInfo.textContent = `In call with ${contact.name}`;
+                    } else {
+                        activeCallInfo.textContent = 'In call';
+                    }
+                    
+                    activeCallBanner.classList.add('visible');
+                });
+            };
+            
+            voiceCallManager.onCallEnded = (peerId) => {
+                activeCallBanner.classList.remove('visible');
+                showToast('Call ended', 'info');
+            };
+            
+            // Load saved settings
+            await loadSettings();
+            
+            // Update UI based on settings
+            updateApiFields();
+            updateStorageStats();
+            
+            // Initialize PeerJS connection
+            function initializePeerConnection() {
+                peer = new Peer();
+                
+                peer.on('open', (id) => {
+                    myId = id;
+                    yourIdElement.textContent = id;
+                    console.log('My peer ID is: ' + id);
+                    
+                    // Update connection status
+                    updateConnectionStatus('Connected to network', true);
+                    
+                    // Load contacts
+                    loadContacts();
+                });
+                
+                peer.on('connection', (conn) => {
+                    // Store connection
+                    connections[conn.peer] = conn;
+                    setupConnectionHandlers(conn);
+                    
+                    // Check if we know this contact
+                    storageManager.getContactById(conn.peer).then(contact => {
+                        if (!contact) {
+                            // Unknown contact, add them
+                            const newContact = {
+                                id: conn.peer,
+                                name: 'Unknown',
+                                language: 'en'
+                            };
+                            
+                            storageManager.addContact(newContact).then(() => {
+                                loadContacts();
+                                showToast('New contact connected', 'info');
+                            });
+                        } else {
+                            showToast(`${contact.name} connected`, 'info');
+                        }
+                    });
+                });
+                
+                peer.on('call', (call) => {
+                    voiceCallManager.handleIncomingCall(call);
+                });
+                
+                peer.on('error', (err) => {
+                    console.error('PeerJS error:', err);
+                    updateConnectionStatus('Connection Error', false);
+                    showToast('Network connection error', 'error');
+                });
+                
+                peer.on('disconnected', () => {
+                    updateConnectionStatus('Disconnected', false);
+                    showToast('Disconnected from network', 'error');
+                });
+            }
+            
+            // Update connection status UI
+            function updateConnectionStatus(status, connected) {
+                connectionStatus.textContent = status;
+                
+                if (connected) {
+                    statusIndicator.classList.remove('disconnected');
+                    statusIndicator.classList.add('connected');
+                } else {
+                    statusIndicator.classList.remove('connected');
+                    statusIndicator.classList.add('disconnected');
+                }
+            }
+            
+            // Set up connection event handlers
+            function setupConnectionHandlers(conn) {
+                conn.on('open', () => {
+                    console.log('Connection opened with', conn.peer);
+                    
+                    // Send initial info
+                    conn.send({
+                        type: 'init',
+                        name: userName,
+                        language: myLanguageSelect.value
+                    });
+                });
+                
+                conn.on('data', async (data) => {
+                    console.log('Received data from', conn.peer, data);
+                    
+                    // Find contact
+                    const contact = await storageManager.getContactById(conn.peer);
+                    
+                    if (data.type === 'init') {
+                        // Update contact info
+                        if (contact) {
+                            contact.name = data.name || contact.name;
+                            contact.language = data.language || contact.language;
+                            
+                            await storageManager.addContact(contact);
+                            loadContacts();
+                        }
+                        return;
+                    }
+                    
+                    if (data.type === 'message') {
+                        // Translate the message
+                        const translatedText = await translateText(
+                            data.text,
+                            data.sourceLanguage,
+                            myLanguageSelect.value
+                        );
+                        
+                        // Add message to the chat
+                        const messageObj = {
+                            text: translatedText,
+                            originalText: data.text,
+                            isSent: false,
+                            senderName: contact ? contact.name : 'Unknown',
+                            contactId: conn.peer,
+                            timestamp: data.timestamp || new Date().toISOString()
+                        };
+                        
+                        // Save to database
+                        await saveMessage(messageObj);
+                        
+                        // Add to UI if this is the active contact
+                        if (activeContactId === conn.peer) {
+                            addMessageToChat(messageObj);
+                        } else {
+                            // Show notification
+                            showToast(`New message from ${messageObj.senderName}`, 'info');
+                        }
+                    }
+                });
+                
+                conn.on('close', () => {
+                    console.log('Connection closed with', conn.peer);
+                    delete connections[conn.peer];
+                });
+                
+                conn.on('error', (err) => {
+                    console.error('Connection error with', conn.peer, err);
+                    delete connections[conn.peer];
+                });
+            }
+            
+            // Connect to a peer
+            function connectToPeer(peerId) {
+                if (peerId === myId) {
+                    showToast("You can't connect to yourself!", 'error');
+                    return;
+                }
+                
+                if (connections[peerId]) {
+                    showToast('Already connected to this contact', 'info');
+                    return;
+                }
+                
+                try {
+                    const conn = peer.connect(peerId);
+                    connections[peerId] = conn;
+                    setupConnectionHandlers(conn);
+                    showToast('Connecting...', 'info');
+                } catch (error) {
+                    console.error('Error connecting to peer:', error);
+                    showToast('Failed to connect', 'error');
+                }
+            }
+            
+            // Send a message
+            async function sendMessage(text) {
+                if (!text.trim() || !activeContactId) {
+                    return;
+                }
+                
+                const timestamp = new Date().toISOString();
+                const conn = connections[activeContactId];
+                
+                if (conn) {
+                    // Get contact's language
+                    const contact = await storageManager.getContactById(activeContactId);
+                    const targetLanguage = contact ? contact.language : 'en';
+                    
+                    // Translate the message if needed
+                    const translatedText = await translateText(
+                        text,
+                        myLanguageSelect.value,
+                        targetLanguage
+                    );
+                    
+                    // Send the message
+                    conn.send({
+                        type: 'message',
+                        text: text,
+                        sourceLanguage: myLanguageSelect.value,
+                        timestamp: timestamp
+                    });
+                }
+                
+                // Add message to the chat locally
+                const messageObj = {
+                    text: text,
+                    originalText: null,
+                    isSent: true,
+                    senderName: userName,
+                    contactId: activeContactId,
+                    timestamp: timestamp
+                };
+                
+                addMessageToChat(messageObj);
+                await saveMessage(messageObj);
+                
+                // Clear input
+                messageInput.value = '';
+            }
+            
+            // Add a message to the chat
+            function addMessageToChat(messageObj) {
+                const { text, originalText, isSent, senderName, timestamp } = messageObj;
+                
+                // Check if we need to add a date divider
+                addDateDividerIfNeeded(timestamp);
+                
+                const messageElement = document.createElement('div');
+                messageElement.className = `message ${isSent ? 'sent' : 'received'}`;
+                
+                // Add sender name for received messages in group chats
+                if (!isSent) {
+                    const senderElement = document.createElement('div');
+                    senderElement.className = 'sender-name';
+                    senderElement.textContent = senderName;
+                    messageElement.appendChild(senderElement);
+                }
+                
+                const textElement = document.createElement('div');
+                textElement.className = 'message-content';
+                textElement.textContent = text;
+                messageElement.appendChild(textElement);
+                
+                // If there's an original text and it's different, show it
+                if (originalText && originalText !== text) {
+                    const originalElement = document.createElement('div');
+                    originalElement.className = 'original-text';
+                    originalElement.textContent = originalText;
+                    messageElement.appendChild(originalElement);
+                }
+                
+                // Add timestamp
+                const timestampElement = document.createElement('div');
+                timestampElement.className = 'timestamp';
+                timestampElement.textContent = formatTimestamp(timestamp);
+                timestampElement.setAttribute('data-timestamp', timestamp);
+                messageElement.appendChild(timestampElement);
+                
+                messagesContainer.appendChild(messageElement);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+            
+            // Add a date divider if needed
+            function addDateDividerIfNeeded(timestamp) {
+                const date = new Date(timestamp).toLocaleDateString();
+                const lastDivider = messagesContainer.querySelector('.date-divider:last-of-type');
+                
+                if (!lastDivider || lastDivider.getAttribute('data-date') !== date) {
+                    const divider = document.createElement('div');
+                    divider.className = 'date-divider';
+                    divider.setAttribute('data-date', date);
+                    
+                    const span = document.createElement('span');
+                    span.textContent = date;
+                    divider.appendChild(span);
+                    
+                    messagesContainer.appendChild(divider);
+                }
+            }
+            
+            // Format timestamp for display
+            function formatTimestamp(timestamp) {
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+            
+            // Save a message
+            async function saveMessage(messageObj) {
+                try {
+                    await storageManager.addMessage(messageObj);
+                    updateStorageStats();
+                } catch (error) {
+                    console.error('Error saving message:', error);
+                }
+            }
+            
+            // Load messages for a contact
+            async function loadMessagesForContact(contactId) {
+                try {
+                    messagesContainer.innerHTML = '';
+                    
+                    const messages = await storageManager.getMessagesByContactId(contactId);
+                    
+                    if (messages && messages.length > 0) {
+                        messages.forEach(message => {
+                            addMessageToChat(message);
+                        });
+                        
+                        // Scroll to bottom
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    } else {
+                        // Add welcome message
+                        addDateDividerIfNeeded(new Date().toISOString());
+                        
+                        const welcomeMessage = document.createElement('div');
+                        welcomeMessage.className = 'message received';
+                        
+                        const textElement = document.createElement('div');
+                        textElement.className = 'message-content';
+                        textElement.textContent = 'No messages yet. Start chatting!';
+                        welcomeMessage.appendChild(textElement);
+                        
+                        messagesContainer.appendChild(welcomeMessage);
+                    }
+                } catch (error) {
+                    console.error('Error loading messages:', error);
+                }
+            }
+            
+            // Clear messages for a contact
+            async function clearMessagesForContact(contactId) {
+                if (!contactId || !confirm('Are you sure you want to clear this chat history? This cannot be undone.')) {
+                    return;
+                }
+                
+                try {
+                    await storageManager.clearMessagesByContactId(contactId);
+                    
+                    if (activeContactId === contactId) {
+                        loadMessagesForContact(contactId);
+                    }
+                    
+                    updateStorageStats();
+                    showToast('Chat history cleared', 'success');
+                } catch (error) {
+                    console.error('Error clearing messages:', error);
+                    showToast('Error clearing chat history', 'error');
+                }
+            }
+            
+            // Update storage statistics
+            async function updateStorageStats() {
+                try {
+                    const stats = await storageManager.getStorageStats();
+                    
+                    storageStatsElement.innerHTML = `
+                        <div>Messages: ${stats.messageCount}</div>
+                        <div>Storage used: ${stats.formattedSize}</div>
+                    `;
+                } catch (error) {
+                    console.error('Error updating storage stats:', error);
+                }
+            }
+            
+            // Load contacts
+            async function loadContacts() {
+                try {
+                    const contacts = await storageManager.getContacts();
+                    
+                    contactsList.innerHTML = '';
+                    
+                    if (contacts && contacts.length > 0) {
+                        contacts.forEach(contact => {
+                            const contactElement = document.createElement('div');
+                            contactElement.className = 'contact';
+                            contactElement.dataset.id = contact.id;
+                            
+                            if (activeContactId === contact.id) {
+                                contactElement.classList.add('active');
+                            }
+                            
+                            const avatarElement = document.createElement('div');
+                            avatarElement.className = 'contact-avatar';
+                            avatarElement.textContent = contact.name.charAt(0);
+                            
+                            const infoElement = document.createElement('div');
+                            infoElement.className = 'contact-info';
+                            
+                            const nameElement = document.createElement('div');
+                            nameElement.textContent = contact.name;
+                            
+                            const languageElement = document.createElement('div');
+                            languageElement.className = 'contact-language';
+                            languageElement.textContent = getLanguageName(contact.language);
+                            
+                            infoElement.appendChild(nameElement);
+                            infoElement.appendChild(languageElement);
+                            
+                            const actionsElement = document.createElement('div');
+                            actionsElement.className = 'contact-actions';
+                            
+                            const callButton = document.createElement('button');
+                            callButton.className = 'contact-btn call-btn';
+                            callButton.innerHTML = '📞';
+                            callButton.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                startVoiceCall(contact.id);
+                            });
+                            
+                            actionsElement.appendChild(callButton);
+                            
+                            contactElement.appendChild(avatarElement);
+                            contactElement.appendChild(infoElement);
+                            contactElement.appendChild(actionsElement);
+                            
+                            contactElement.addEventListener('click', () => {
+                                setActiveContact(contact.id);
+                            });
+                            
+                            contactsList.appendChild(contactElement);
+                        });
+                    } else {
+                        contactsList.innerHTML = '<div style="text-align: center; padding: 20px;">No contacts yet</div>';
+                    }
+                } catch (error) {
+                    console.error('Error loading contacts:', error);
+                }
+            }
+            
+            // Set active contact
+            function setActiveContact(contactId) {
+                activeContactId = contactId;
+                
+                // Update UI
+                document.querySelectorAll('.contact').forEach(elem => {
+                    if (elem.dataset.id === contactId) {
+                        elem.classList.add('active');
+                    } else {
+                        elem.classList.remove('active');
+                    }
+                });
+                
+                // Load messages
+                loadMessagesForContact(contactId);
+                
+                // On mobile, close the sidebar
+                if (window.innerWidth < 768) {
+                    sidebarElement.classList.remove('open');
+                }
+            }
+            
+            // Get language name from code
+            function getLanguageName(code) {
+                const languages = {
+                    'en': 'English',
+                    'es': 'Spanish',
+                    'fr': 'French',
+                    'de': 'German',
+                    'it': 'Italian',
+                    'pt': 'Portuguese',
+                    'ru': 'Russian',
+                    'zh': 'Chinese',
+                    'ja': 'Japanese',
+                    'ko': 'Korean',
+                    'ar': 'Arabic',
+                    'hi': 'Hindi'
+                };
+                
+                return languages[code] || code;
+            }
+            
+            // Save user settings
+            async function saveSettings() {
+                const settings = {
+                    userName: userName,
+                    myLanguage: myLanguageSelect.value,
+                    translationService: translationServiceSelect.value,
+                    apiKey: apiKeyInput.value,
+                    msRegion: msRegionInput.value
+                };
+                
+                try {
+                    await storageManager.saveSettings(settings);
+                } catch (error) {
+                    console.error('Error saving settings:', error);
+                }
+            }
+            
+            // Load user settings
+            async function loadSettings() {
+                try {
+                    const settings = await storageManager.loadSettings();
+                    
+                    if (settings) {
+                        userName = settings.userName || 'Me';
+                        yourNameInput.value = userName;
+                        
+                        myLanguageSelect.value = settings.myLanguage || 'en';
+                        translationServiceSelect.value = settings.translationService || 'libre';
+                        apiKeyInput.value = settings.apiKey || '';
+                        msRegionInput.value = settings.msRegion || '';
+                    }
+                } catch (error) {
+                    console.error('Error loading settings:', error);
+                }
+            }
+            
+            // Update API fields visibility
+            function updateApiFields() {
+                const service = translationServiceSelect.value;
+                
+                apiKeyContainer.style.display = (service !== 'libre') ? 'block' : 'none';
+                msRegionContainer.style.display = (service === 'microsoft') ? 'block' : 'none';
+            }
+            
+            // Translate text using selected service
+            async function translateText(text, sourceLanguage, targetLanguage) {
+                if (sourceLanguage === targetLanguage) {
+                    return text;
+                }
+                
+                const service = translationServiceSelect.value;
+                const apiKey = apiKeyInput.value;
+                const msRegion = msRegionInput.value;
+                
+                try {
+                    let translatedText;
+                    
+                    switch (service) {
+                        case 'libre':
+                            // Using LibreTranslate's public API (for demo purposes)
+                            const libreResponse = await fetch('https://libretranslate.com/translate', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    q: text,
+                                    source: sourceLanguage,
+                                    target: targetLanguage
+                                }),
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            const libreData = await libreResponse.json();
+                            translatedText = libreData.translatedText;
+                            break;
+                            
+                        case 'google':
+                            // Google Translate API (requires API key)
+                            if (!apiKey) {
+                                return `[Translation failed: API key required]`;
+                            }
+                            
+                            const googleResponse = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${apiKey}`, {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    q: text,
+                                    source: sourceLanguage,
+                                    target: targetLanguage,
+                                    format: 'text'
+                                }),
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            const googleData = await googleResponse.json();
+                            translatedText = googleData.data.translations[0].translatedText;
+                            break;
+                            
+                        case 'microsoft':
+                            // Microsoft Translator API (requires API key and region)
+                            if (!apiKey) {
+                                return `[Translation failed: API key required]`;
+                            }
+                            
+                            if (!msRegion) {
+                                return `[Translation failed: Azure region required]`;
+                            }
+                            
+                            const msResponse = await fetch(`https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&from=${sourceLanguage}&to=${targetLanguage}`, {
+                                method: 'POST',
+                                body: JSON.stringify([{ Text: text }]),
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Ocp-Apim-Subscription-Key': apiKey,
+                                    'Ocp-Apim-Subscription-Region': msRegion
+                                }
+                            });
+                            
+                            const msData = await msResponse.json();
+                            translatedText = msData[0].translations[0].text;
+                            break;
+                            
+                        default:
+                            return `[Translation service not supported]`;
+                    }
+                    
+                    return translatedText || text;
+                } catch (error) {
+                    console.error('Translation error:', error);
+                    return `[Translation failed: ${error.message}]`;
+                }
+            }
+            
+            // Start voice input
+            let voiceInputActive = false;
+            
+            function toggleVoiceInput() {
+                if (voiceInputActive) {
+                    stopVoiceInput();
+                } else {
+                    startVoiceInput();
+                }
+            }
+            
+            function startVoiceInput() {
+                if (!activeContactId) {
+                    showToast('Select a contact first', 'error');
+                    return;
+                }
+                
+                const success = voiceCallManager.startVoiceInput(
+                    myLanguageSelect.value,
+                    (transcript) => {
+                        messageInput.value = transcript;
+                        stopVoiceInput();
+                        // Auto-send message after voice input
+                        sendMessage(transcript);
+                    }
+                );
+                
+                if (success) {
+                    voiceInputActive = true;
+                    voiceButton.classList.add('active');
+                    showToast('Listening...', 'info');
+                }
+            }
+            
+            function stopVoiceInput() {
+                voiceCallManager.stopVoiceInput();
+                voiceInputActive = false;
+                voiceButton.classList.remove('active');
+            }
+            
+            // Start voice call
+            async function startVoiceCall(contactId) {
+                if (!contactId) {
+                    showToast('Select a contact first', 'error');
+                    return;
+                }
+                
+                const success = await voiceCallManager.callPeer(peer, contactId);
+                
+                if (success) {
+                    const contact = await storageManager.getContactById(contactId);
+                    activeCallInfo.textContent = `Calling ${contact.name || 'contact'}...`;
+                    activeCallBanner.classList.add('visible');
+                    showToast('Calling...', 'info');
+                }
+            }
+            
+            // End voice call
+            function endVoiceCall() {
+                if (activeContactId) {
+                    voiceCallManager.endCall(activeContactId);
+                }
+                
+                activeCallBanner.classList.remove('visible');
+            }
+            
+            // End all voice calls
+            function endAllVoiceCalls() {
+                voiceCallManager.endAllCalls();
+                activeCallBanner.classList.remove('visible');
+            }
+            
+            // Event Listeners
+            menuButton.addEventListener('click', () => {
+                sidebarElement.classList.add('open');
+            });
+            
+            sidebarCloseButton.addEventListener('click', () => {
+                sidebarElement.classList.remove('open');
+            });
+            
+            copyIdButton.addEventListener('click', () => {
+                navigator.clipboard.writeText(myId)
+                    .then(() => {
+                        showToast('ID copied to clipboard!', 'success');
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy:', err);
+                        showToast('Failed to copy ID', 'error');
+                    });
+            });
+            
+            sendButton.addEventListener('click', () => {
+                sendMessage(messageInput.value);
+            });
+            
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessage(messageInput.value);
+                }
+            });
+            
+            translationServiceSelect.addEventListener('change', () => {
+                updateApiFields();
+                saveSettings();
+            });
+            
+            myLanguageSelect.addEventListener('change', () => {
+                saveSettings();
+            });
+            
+            apiKeyInput.addEventListener('change', () => {
+                saveSettings();
+            });
+            
+            msRegionInput.addEventListener('change', () => {
+                saveSettings();
+            });
+            
+            yourNameInput.addEventListener('change', () => {
+                userName = yourNameInput.value.trim() || 'Me';
+                saveSettings();
+                
+                // Update name with connected contacts
+                Object.values(connections).forEach(conn => {
+                    conn.send({
+                        type: 'init',
+                        name: userName,
+                        language: myLanguageSelect.value
+                    });
+                });
+            });
+            
+            clearHistoryButton.addEventListener('click', () => {
+                if (activeContactId) {
+                    clearMessagesForContact(activeContactId);
+                } else {
+                    showToast('Select a contact first', 'error');
+                }
+            });
+            
+            exportHistoryButton.addEventListener('click', async () => {
+                if (activeContactId) {
+                    try {
+                        await storageManager.exportChatHistory(activeContactId);
+                        showToast('Chat history exported', 'success');
+                    } catch (error) {
+                        console.error('Error exporting chat history:', error);
+                        showToast('Error exporting chat history', 'error');
+                    }
+                } else {
+                    showToast('Select a contact first', 'error');
+                }
+            });
+            
+            voiceButton.addEventListener('click', toggleVoiceInput);
+            
+            endCallButton.addEventListener('click', endVoiceCall);
+            
+            // Add contact modal
+            addContactButton.addEventListener('click', () => {
+                addContactModal.classList.add('active');
+            });
+            
+            addContactHeaderButton.addEventListener('click', () => {
+                addContactModal.classList.add('active');
+            });
+            
+            addContactClose.addEventListener('click', () => {
+                addContactModal.classList.remove('active');
+            });
+            
+            addContactCancel.addEventListener('click', () => {
+                addContactModal.classList.remove('active');
+            });
+            
+            addContactSave.addEventListener('click', async () => {
+                const name = contactNameInput.value.trim();
+                const id = contactIdInput.value.trim();
+                const language = contactLanguageSelect.value;
+                
+                if (!name || !id) {
+                    showToast('Name and ID are required', 'error');
+                    return;
+                }
+                
+                try {
+                    const contact = {
+                        id,
+                        name,
+                        language
+                    };
+                    
+                    await storageManager.addContact(contact);
+                    await loadContacts();
+                    
+                    // Connect to the contact
+                    connectToPeer(id);
+                    
+                    // Set as active contact
+                    setActiveContact(id);
+                    
+                    // Close modal
+                    addContactModal.classList.remove('active');
+                    
+                    // Clear form
+                    contactNameInput.value = '';
+                    contactIdInput.value = '';
+                    
+                    showToast('Contact added', 'success');
+                } catch (error) {
+                    console.error('Error adding contact:', error);
+                    showToast('Error adding contact', 'error');
+                }
+            });
+            
+            // Incoming call modal
+            acceptCallButton.addEventListener('click', async () => {
+                const success = await voiceCallManager.acceptCall(activeContactId);
+                
+                if (success) {
+                    incomingCallModal.classList.remove('active');
+                }
+            });
+            
+            rejectCallButton.addEventListener('click', () => {
+                voiceCallManager.endCall(activeContactId);
+                incomingCallModal.classList.remove('active');
+            });
+            
+            // Handle page unload
+            window.addEventListener('beforeunload', () => {
+                endAllVoiceCalls();
+            });
+            
+            // Close modals when clicking backdrop
+            addContactModal.addEventListener('click', (e) => {
+                if (e.target === addContactModal) {
+                    addContactModal.classList.remove('active');
+                }
+            });
+            
+            // Initialize the application
+            initializePeerConnection();
+            
+            // Register service worker for PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').catch(error => {
+                    console.log('Service Worker registration failed:', error);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
