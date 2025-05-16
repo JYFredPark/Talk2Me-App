@@ -377,6 +377,7 @@
             align-items: center;
             background-color: white;
             border-top: 1px solid #eee;
+            position: relative;
         }
         
         .message-input {
@@ -386,7 +387,9 @@
             border-radius: 25px;
             outline: none;
             font-size: 1rem;
-            margin-right: 10px;
+            margin-right: 15px;
+            width: calc(100% - 120px);
+            box-sizing: border-box;
         }
         
         .send-btn {
@@ -401,6 +404,8 @@
             justify-content: center;
             cursor: pointer;
             font-size: 18px;
+            position: absolute;
+            right: 15px;
         }
         
         .mic-btn {
@@ -415,7 +420,8 @@
             justify-content: center;
             cursor: pointer;
             font-size: 18px;
-            margin-right: 10px;
+            position: absolute;
+            right: 70px;
         }
         
         .mic-btn.active {
@@ -1269,7 +1275,50 @@
     
             // Create a global instance
             const storageManager = new ChatStorageManager();
-    
+   
+            // QR Code implementation for easier contact adding
+            function generateQR(text) {
+              // Simple QR code generator using HTML canvas
+              const qrCode = {};
+            
+              // Generate a data URL for the QR code
+              qrCode.createQR = function(text, size = 200) {
+                // Create a URL that contains the connection info
+                const baseUrl = window.location.href.split('?')[0]; // Get current URL without parameters
+                const qrData = `${baseUrl}?connect=${text}`;
+
+                // Create a simple visual representation (in a real app, use a QR library)
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+
+                // Draw a placeholder for the QR
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, size, size);
+                ctx.fillStyle = '#000000';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Scan to connect', size/2, size/2);
+
+                // Add border to simulate QR code
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(10, 10, size-20, size-20);
+
+                // Add link text
+                ctx.font = '12px Arial';
+                ctx.fillText(qrData, size/2, size/2 + 20);
+
+                return {
+                  dataUrl: canvas.toDataURL(),
+                  inviteUrl: qrData
+                };
+              };
+
+              return qrCode;
+            }
+
             // Voice call manager class
             class VoiceCallManager {
                 constructor() {
@@ -1569,7 +1618,99 @@
             const activeCallBanner = document.getElementById('active-call-banner');
             const activeCallInfo = document.getElementById('active-call-info');
             const endCallButton = document.getElementById('end-call-btn');
+           
+            // Add a modal for easier contact sharing
+            const shareModal = document.createElement('div');
+            shareModal.className = 'modal-backdrop';
+            shareModal.id = 'share-modal';
+            shareModal.innerHTML = `
+              <div class="modal">
+                <div class="modal-header">
+                  <h3 class="modal-title">Share Your Contact</h3>
+                  <button class="modal-close" id="share-modal-close">×</button>
+                </div>
+                <div class="modal-body">
+                  <div style="text-align: center; padding: 20px;">
+                    <div id="qrcode-container" style="margin-bottom: 20px;"></div>
+                    <p>Or share this link:</p>
+                    <input type="text" id="invite-link" readonly style="text-align: center; width: 100%; padding: 10px; margin-bottom: 10px;">
+                    <button id="copy-link" style="width: 100%;">Copy Link</button>
+                  </div>
+                </div>
+              </div>
+            `;
+            document.body.appendChild(shareModal);
+          
+            // Add a "Share Contact" button to the header
+            const shareButton = document.createElement('button');
+            shareButton.className = 'header-btn';
+            shareButton.id = 'share-btn';
+            shareButton.innerHTML = '↗️';
+            shareButton.title = 'Share Your Contact';
+            document.querySelector('.header-actions').insertBefore(shareButton, document.querySelector('.header-actions').firstChild);
+          
+            // Event handlers for the share functionality
+            const shareModalClose = document.getElementById('share-modal-close');
+            const inviteLinkInput = document.getElementById('invite-link');
+            const copyLinkButton = document.getElementById('copy-link');
+            const qrcodeContainer = document.getElementById('qrcode-container');
+          
+            shareButton.addEventListener('click', () => {
+              // Generate QR code and invite link
+              const qrCode = generateQR(myId);
+              const qrResult = qrCode.createQR(myId);
             
+              // Display QR code
+              qrcodeContainer.innerHTML = `<img src="${qrResult.dataUrl}" alt="QR Code" style="max-width: 100%;">`;
+            
+              // Display invite link
+              inviteLinkInput.value = qrResult.inviteUrl;
+            
+              // Show modal
+              shareModal.classList.add('active');
+            });
+            
+            shareModalClose.addEventListener('click', () => {
+              shareModal.classList.remove('active');
+            });
+            
+            copyLinkButton.addEventListener('click', () => {
+              inviteLinkInput.select();
+              document.execCommand('copy');
+              showToast('Link copied to clipboard!', 'success');
+            });
+            
+            // Add code to handle incoming connections from links
+            // This goes in the initialization section where you check URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const connectToId = urlParams.get('connect');
+            
+            if (connectToId) {
+              // Auto-connect when someone clicks a shared link
+              setTimeout(() => {
+                // Check if we already know this contact
+                storageManager.getContactById(connectToId).then(contact => {
+                  if (!contact) {
+                    // Show a modal to save this new contact
+                    addContactModal.classList.add('active');
+                    contactIdInput.value = connectToId;
+                    
+                    // Auto-focus the name field
+                    setTimeout(() => {
+                      contactNameInput.focus();
+                    }, 500);
+                    
+                    // Show a toast
+                    showToast('Enter a name for this new contact', 'info');
+                  } else {
+                    // Already know this contact, just connect
+                    connectToPeer(connectToId);
+                    setActiveContact(connectToId);
+                    showToast(`Connecting to ${contact.name}...`, 'info');
+                  }
+                });
+              }, 1000);
+            }
             // Modal elements
             const addContactModal = document.getElementById('add-contact-modal');
             const addContactClose = document.getElementById('add-contact-close');
