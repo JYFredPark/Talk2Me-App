@@ -747,6 +747,58 @@
           opacity: 0.7 !important;
         }
 
+        /* Home button and clear chat styling */
+        .message-action-btn {
+          transition: opacity 0.3s;
+          opacity: 0.7;
+        }
+
+        .message-action-btn:hover {
+          opacity: 1;
+        }
+
+        /* Style for welcome screen */
+        .welcome-container {
+          text-align: center;
+          padding: 20px;
+          max-width: 600px;
+          margin: 0 auto;
+        }
+
+        .welcome-title {
+          font-size: 24px;
+          margin-bottom: 15px;
+          color: var(--primary-color);
+        }
+
+        .welcome-subtitle {
+          font-size: 16px;
+          margin-bottom: 25px;
+          color: #666;
+        }
+
+        .welcome-feature {
+          display: flex;
+          align-items: center;
+          margin-bottom: 15px;
+          text-align: left;
+        }
+
+        .welcome-feature-icon {
+          font-size: 24px;
+          margin-right: 15px;
+          color: var(--primary-color);
+        }
+
+        .welcome-actions {
+          margin-top: 30px;
+        }
+
+        /* Make sure a chat is active before showing input area initially */
+        .input-area {
+          display: none; /* Hide by default, show when chat is active */
+        }
+
         @keyframes spin {
             to {
                 transform: rotate(360deg);
@@ -1645,7 +1697,113 @@
             const activeCallBanner = document.getElementById('active-call-banner');
             const activeCallInfo = document.getElementById('active-call-info');
             const endCallButton = document.getElementById('end-call-btn');
-         
+        
+            // Create a home button for the header
+            const homeButton = document.createElement('button');
+            homeButton.className = 'header-btn';
+            homeButton.innerHTML = '🏠';
+            homeButton.title = 'Home';
+            homeButton.style.marginRight = '5px';
+
+            // Add functionality to return to welcome screen
+            homeButton.addEventListener('click', () => {
+              // Clear active contact
+              activeContactId = null;
+            
+              // Update UI
+              document.querySelectorAll('.contact').forEach(elem => {
+                elem.classList.remove('active');
+              });
+
+              // Show welcome screen
+              messagesContainer.innerHTML = '';
+
+              // Add welcome message
+              const welcomeDiv = document.createElement('div');
+              welcomeDiv.className = 'date-divider';
+              welcomeDiv.innerHTML = '<span>Welcome</span>';
+              messagesContainer.appendChild(welcomeDiv);
+
+              const welcomeMsg = document.createElement('div');
+              welcomeMsg.className = 'message received';
+              welcomeMsg.innerHTML = `
+                <div class="message-content">
+                  <h3>Welcome to TalkWorld!</h3>
+                  <p>The multilingual chat app that translates messages automatically.</p>
+                  <ul style="margin-top: 10px; padding-left: 20px;">
+                    <li>Share your ID to connect with friends</li>
+                    <li>Each person types in their own language</li>
+                    <li>Messages are translated automatically</li>
+                  </ul>
+                </div>
+              `;
+              messagesContainer.appendChild(welcomeMsg);
+            
+              // Add quick connect div
+              const quickConnectDiv = document.createElement('div');
+              quickConnectDiv.style.textAlign = 'center';
+              quickConnectDiv.style.padding = '20px';
+              quickConnectDiv.style.backgroundColor = '#f8f8f8';
+              quickConnectDiv.style.borderRadius = '8px';
+              quickConnectDiv.style.margin = '20px 10px';
+              quickConnectDiv.innerHTML = `
+                <h3>Connect with a Friend</h3>
+                <div style="display: flex; margin-top: 10px;">
+                  <input type="text" id="quick-connect-id" placeholder="Paste friend's ID or link" style="flex: 1; padding: 10px; border-radius: 4px 0 0 4px; border: 1px solid #ddd;">
+                  <button id="quick-connect-btn" style="background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 0 4px 4px 0;">Connect</button>
+                </div>
+              `;
+              messagesContainer.appendChild(quickConnectDiv);
+            
+              // Set up the quick connect button
+              document.getElementById('quick-connect-btn').addEventListener('click', () => {
+                const input = document.getElementById('quick-connect-id');
+                let connectId = input.value.trim();
+
+                // Check if it's a full URL and extract the ID if needed
+                if (connectId.includes('?connect=')) {
+                  connectId = new URL(connectId).searchParams.get('connect');
+                }
+
+                if (connectId && connectId !== myId) {
+                  // Connect to the ID
+                  const tempContact = {
+                    id: connectId,
+                    name: 'New Contact',
+                    language: 'en'
+                  };
+
+                  // Add to contacts
+                  storageManager.addContact(tempContact)
+                    .then(() => {
+                      connectToPeer(connectId);
+                      loadContacts();
+                      setActiveContact(connectId);
+                    
+                      // Prompt for name
+                      setTimeout(() => {
+                        const name = prompt('What would you like to name this contact?', 'New Contact');
+                        if (name) {
+                          tempContact.name = name;
+                          storageManager.addContact(tempContact)
+                            .then(() => loadContacts());
+                        }
+                      }, 1000);
+                    });
+                } else {
+                  showToast('Please enter a valid ID', 'error');
+                }
+              });
+
+              // Hide input area when no active chat
+              document.querySelector('.input-area').style.display = 'none';
+            });
+
+            // Add the home button to the header (before other buttons)
+            const headerActionsHome = document.querySelector('.header-actions');
+            if (headerActionsHome) {
+              headerActionsHome.insertBefore(homeButton, headerActionsHome.firstChild);
+            }
             // Add a quick-connect button on the main screen
             const quickConnectDiv = document.createElement('div');
             quickConnectDiv.style.textAlign = 'center';
@@ -2310,6 +2468,64 @@
                 } catch (error) {
                     console.error('Error loading messages:', error);
                 }
+                
+                // Add a clear chat button to the messages area
+                const clearChatButton = document.createElement('button');
+                clearChatButton.className = 'message-action-btn';
+                clearChatButton.innerHTML = '🗑️ Clear Chat';
+                clearChatButton.style.position = 'absolute';
+                clearChatButton.style.top = '10px';
+                clearChatButton.style.right = '10px';
+                clearChatButton.style.zIndex = '5';
+                clearChatButton.style.backgroundColor = 'rgba(231, 76, 60, 0.8)';
+                clearChatButton.style.color = 'white';
+                clearChatButton.style.border = 'none';
+                clearChatButton.style.borderRadius = '4px';
+                clearChatButton.style.padding = '5px 10px';
+                clearChatButton.style.fontSize = '12px';
+                clearChatButton.style.cursor = 'pointer';
+                clearChatButton.style.display = 'none'; // Hidden by default
+
+                // Show button on hover
+                messagesContainer.addEventListener('mouseenter', () => {
+                  if (clearChatButton.parentNode === messagesContainer) {
+                    clearChatButton.style.display = 'block';
+                  }
+                });
+
+                messagesContainer.addEventListener('mouseleave', () => {
+                  if (clearChatButton.parentNode === messagesContainer) {
+                    clearChatButton.style.display = 'none';
+                  }
+                });
+
+                // Clear chat functionality
+                clearChatButton.addEventListener('click', () => {
+                  if (confirm('Are you sure you want to clear this chat? This cannot be undone.')) {
+                    storageManager.clearMessagesByContactId(contactId).then(() => {
+                      messagesContainer.innerHTML = '';
+                    
+                      // Add a "chat cleared" indicator
+                      const clearedDiv = document.createElement('div');
+                      clearedDiv.className = 'date-divider';
+                      clearedDiv.innerHTML = '<span>Chat Cleared</span>';
+                      messagesContainer.appendChild(clearedDiv);
+                    
+                      // Add the clear button back
+                      messagesContainer.appendChild(clearChatButton);
+                    
+                      // Update storage stats
+                      updateStorageStats();
+                    
+                      showToast('Chat history cleared', 'success');
+                    }).catch(error => {
+                      console.error('Error clearing chat:', error);
+                      showToast('Error clearing chat', 'error');
+                    });
+                  }
+                });
+
+                messagesContainer.appendChild(clearChatButton);
             }
             
             // Clear messages for a contact
@@ -2427,7 +2643,10 @@
                 
                 // Load messages
                 loadMessagesForContact(contactId);
-                
+               
+                // Show input area when chat is active
+                document.querySelector('.input-area').style.display = 'flex';
+
                 // On mobile, close the sidebar
                 if (window.innerWidth < 768) {
                     sidebarElement.classList.remove('open');
@@ -2839,6 +3058,7 @@
                     console.log('Service Worker registration failed:', error);
                 });
             }
+            homeButton.click();
         });
 
 
