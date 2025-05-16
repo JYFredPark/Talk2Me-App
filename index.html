@@ -2543,5 +2543,103 @@
       });
     </script>
 
+    <!-- Input Fix Script - Add before </body> tag -->
+    <script>
+        // Wait for document to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+          // Fix for invisible text in input
+          const messageInput = document.getElementById('message-input');
+          if (messageInput) {
+            // Force visible styling
+            messageInput.style.color = '#000000';
+            messageInput.style.backgroundColor = '#ffffff';
+            messageInput.style.border = '1px solid #cccccc';
+            messageInput.style.padding = '12px 15px';
+            messageInput.style.fontSize = '16px';
+            messageInput.style.caretColor = '#000000'; // Make cursor visible
+            messageInput.style.opacity = '1';
+            messageInput.style.visibility = 'visible';
+            messageInput.style.display = 'block';
+            messageInput.style.width = '100%';
+            
+            // Fix potential event handling issues
+            messageInput.addEventListener('input', function(e) {
+              console.log('Input detected:', messageInput.value);
+              // Force the input to update its display
+              messageInput.style.display = 'none';
+              setTimeout(() => {
+                messageInput.style.display = 'block';
+                messageInput.focus();
+              }, 10);
+            });
+            
+            // Apply focus when clicking the input area
+            messageInput.addEventListener('click', function() {
+              messageInput.focus();
+            });
+            
+            // Focus the input on page load
+            setTimeout(() => {
+              messageInput.focus();
+              console.log('Input focused');
+              
+              // Send a test character and delete it to "wake up" the input
+              messageInput.value = 'ㅤ'; // Invisible character
+              setTimeout(() => {
+                messageInput.value = '';
+              }, 100);
+            }, 500);
+          }
+          
+          // Fix for mobile keyboards
+          document.body.addEventListener('touchstart', function() {
+            if (messageInput) {
+              setTimeout(() => messageInput.focus(), 300);
+            }
+          });
+          
+          // Add visual indicator that shows what you're typing
+          const inputArea = document.querySelector('.input-area');
+          if (inputArea) {
+            const typingPreview = document.createElement('div');
+            typingPreview.style.position = 'absolute';
+            typingPreview.style.top = '-25px';
+            typingPreview.style.left = '15px';
+            typingPreview.style.backgroundColor = 'rgba(0,0,0,0.7)';
+            typingPreview.style.color = 'white';
+            typingPreview.style.padding = '3px 8px';
+            typingPreview.style.borderRadius = '10px';
+            typingPreview.style.fontSize = '14px';
+            typingPreview.style.display = 'none';
+            typingPreview.style.maxWidth = '80%';
+            typingPreview.style.overflow = 'hidden';
+            typingPreview.style.textOverflow = 'ellipsis';
+            typingPreview.style.whiteSpace = 'nowrap';
+            
+            inputArea.style.position = 'relative';
+            inputArea.appendChild(typingPreview);
+            
+            // Update the preview as user types
+            if (messageInput) {
+              messageInput.addEventListener('input', function() {
+                if (messageInput.value.length > 0) {
+                  typingPreview.textContent = messageInput.value;
+                  typingPreview.style.display = 'block';
+                } else {
+                  typingPreview.style.display = 'none';
+                }
+              });
+            }
+            
+            // Hide preview when sent
+            const sendButton = document.getElementById('send-btn');
+            if (sendButton) {
+              sendButton.addEventListener('click', function() {
+                typingPreview.style.display = 'none';
+              });
+            }
+          }
+        });
+    </script>
 </body>
 </html>
