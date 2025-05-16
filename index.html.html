@@ -791,6 +791,9 @@
                             <option value="ko">Korean</option>
                             <option value="ar">Arabic</option>
                             <option value="hi">Hindi</option>
+                            <option value="tl">Filipino (Tagalog)</option>
+                            <option value="ceb">Cebuano</option>
+                            <option value="ilo">Ilocano</option>
                         </select>
                     </div>
                 </div>
@@ -1350,7 +1353,10 @@
                         'ja': 'ja-JP',
                         'ko': 'ko-KR',
                         'ar': 'ar-SA',
-                        'hi': 'hi-IN'
+                        'hi': 'hi-IN',
+                        'tl': 'fil-PH',  // Filipino/Tagalog
+                        'ceb': 'ceb-PH', // Cebuano
+                        'ilo': 'ilo-PH', // Ilocano
                     };
                     
                     return langMap[shortCode] || 'en-US';
@@ -2483,6 +2489,59 @@
                 });
             }
         });
+
+
     </script>
+
+    <script>
+      // Create a default test contact immediately when app loads
+      document.addEventListener('DOMContentLoaded', async () => {
+        // Wait for storage manager to initialize
+        setTimeout(async () => {
+          try {
+            // Check if we already have contacts
+            const contacts = await storageManager.getContacts();
+
+            if (!contacts || contacts.length === 0) {
+              // Add a welcome/test contact
+              const welcomeContact = {
+                id: 'welcome-bot',
+                name: 'TalkWorld Guide',
+                language: myLanguageSelect.value || 'en'
+              };
+
+              await storageManager.addContact(welcomeContact);
+              await loadContacts();
+
+              // Set as active contact
+              setActiveContact('welcome-bot');
+
+              // Add a welcome message
+              const welcomeMsg = {
+                text: "Welcome to TalkWorld! This is a test chat where you can try the interface. To talk with real people, add their contact ID using the + button in the top right.",
+                isSent: false,
+                senderName: 'TalkWorld Guide',
+                contactId: 'welcome-bot',
+                timestamp: new Date().toISOString()
+              };
+
+              addMessageToChat(welcomeMsg);
+              saveMessage(welcomeMsg);
+
+              // Enable input and focus
+              const messageInput = document.getElementById('message-input');
+              if (messageInput) {
+                messageInput.disabled = false;
+                messageInput.placeholder = "Type here to test the interface...";
+                messageInput.focus();
+              }
+            }
+          } catch (err) {
+            console.error("Error creating welcome contact:", err);
+          }
+        }, 1000);
+      });
+    </script>
+
 </body>
 </html>
