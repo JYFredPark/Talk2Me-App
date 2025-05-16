@@ -719,7 +719,34 @@
             border-top-color: white;
             animation: spin 1s ease-in-out infinite;
         }
+
+        /* Remove any unwanted text preview elements */
+        .typing-preview, .toast-typing, .preview-text {
+          display: none !important; /* Completely hide these elements */
+        }
         
+        /* Fix input field to ensure no overlapping text */
+        .message-input, #message-input {
+          position: relative;
+          z-index: 10;
+          background-color: white !important;
+          color: black !important;
+          font-size: 16px !important;
+          line-height: 1.4 !important;
+          padding: 12px 15px !important;
+          margin-right: 70px !important; /* More space for buttons */
+          width: calc(100% - 100px) !important;
+          height: auto !important;
+          min-height: 20px !important;
+          max-height: 100px !important;
+        }
+        
+        /* Ensure placeholder text is visible but not overlapping */
+        .message-input::placeholder {
+          color: #999 !important;
+          opacity: 0.7 !important;
+        }
+
         @keyframes spin {
             to {
                 transform: rotate(360deg);
@@ -1618,7 +1645,120 @@
             const activeCallBanner = document.getElementById('active-call-banner');
             const activeCallInfo = document.getElementById('active-call-info');
             const endCallButton = document.getElementById('end-call-btn');
-           
+         
+            // Add a quick-connect button on the main screen
+            const quickConnectDiv = document.createElement('div');
+            quickConnectDiv.style.textAlign = 'center';
+            quickConnectDiv.style.padding = '20px';
+            quickConnectDiv.style.backgroundColor = '#f8f8f8';
+            quickConnectDiv.style.borderRadius = '8px';
+            quickConnectDiv.style.margin = '10px';
+            quickConnectDiv.innerHTML = `
+                <h3>Connect with a Friend</h3>
+                <div style="display: flex; margin-top: 10px;">
+                    <input type="text" id="quick-connect-id" placeholder="Paste friend's ID or link" style="flex: 1; padding: 10px; border-radius: 4px 0 0 4px; border: 1px solid #ddd;">
+                    <button id="quick-connect-btn" style="background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 0 4px 4px 0;">Connect</button>
+                </div>
+            `;
+            
+            // Add to the messages container if it's empty
+            //const messagesContainer = document.getElementById('messages-container');
+            if (messagesContainer && messagesContainer.children.length < 3) {
+                messagesContainer.appendChild(quickConnectDiv);
+
+                // Set up the quick connect button
+                document.getElementById('quick-connect-btn').addEventListener('click', () => {
+                    const input = document.getElementById('quick-connect-id');
+                    let connectId = input.value.trim();
+
+                    // Check if it's a full URL and extract the ID if needed
+                    if (connectId.includes('?connect=')) {
+                        connectId = new URL(connectId).searchParams.get('connect');
+                    }
+
+                    if (connectId && connectId !== myId) {
+                        // Create a temporary contact
+                        const tempContact = {
+                            id: connectId,
+                            name: 'New Contact',
+                            language: 'en'
+                        };
+
+                        // Add to contacts
+                        storageManager.addContact(tempContact)
+                            .then(() => {
+                                // Connect
+                                connectToPeer(connectId);
+                                loadContacts();
+                                setActiveContact(connectId);
+
+                                // Remove the quick connect div
+                                messagesContainer.removeChild(quickConnectDiv);
+
+                                // Prompt for name
+                                setTimeout(() => {
+                                    const name = prompt('What would you like to name this contact?', 'New Contact');
+                                    if (name) {
+                                        tempContact.name = name;
+                                        storageManager.addContact(tempContact)
+                                            .then(() => loadContacts());
+                                    }
+                                }, 1000);
+                            });
+                    } else {
+                        showToast('Please enter a valid ID', 'error');
+                    }
+                });
+            }
+
+            // Quick QR code for easier sharing on mobile
+            const qrButton = document.createElement('button');
+            qrButton.className = 'header-btn';
+            qrButton.innerHTML = '📱';
+            qrButton.title = 'Show QR Code';
+            qrButton.onclick = () => {
+                // Create QR code modal
+                const modal = document.createElement('div');
+                modal.className = 'modal-backdrop active';
+                modal.innerHTML = `
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h3 class="modal-title">Scan to Connect</h3>
+                            <button class="modal-close">×</button>
+                        </div>
+                        <div class="modal-body" style="text-align: center;">
+                            <div style="background: white; padding: 15px; display: inline-block;">
+                                <h3>Your ID: ${myId}</h3>
+                                <p>Scan this or share the link below:</p>
+                                <div style="font-size: 11px; overflow-wrap: break-word; margin: 10px 0;">
+                                    ${window.location.origin + window.location.pathname + '?connect=' + myId}
+                                </div>
+                                <!-- Draw a fake QR code until we can add a proper library -->
+                                <div style="width: 200px; height: 200px; background: #f5f5f5; margin: 0 auto; position: relative;">
+                                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center;">
+                                        <div style="text-align: center;">
+                                            <div style="font-size: 40px;">📱➡️💻</div>
+                                            <div>Scan to connect</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                
+                // Close button functionality
+                modal.querySelector('.modal-close').onclick = () => {
+                    document.body.removeChild(modal);
+                };
+            };
+
+            // Add the QR button to the header
+            const headerActions = document.querySelector('.header-actions');
+            if (headerActions) {
+                headerActions.prepend(qrButton);
+            }
             // Add a modal for easier contact sharing
             const shareModal = document.createElement('div');
             shareModal.className = 'modal-backdrop';
@@ -1669,22 +1809,22 @@
               // Show modal
               shareModal.classList.add('active');
             });
-            
+
             shareModalClose.addEventListener('click', () => {
               shareModal.classList.remove('active');
             });
-            
+
             copyLinkButton.addEventListener('click', () => {
               inviteLinkInput.select();
               document.execCommand('copy');
               showToast('Link copied to clipboard!', 'success');
             });
-            
+
             // Add code to handle incoming connections from links
             // This goes in the initialization section where you check URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const connectToId = urlParams.get('connect');
-            
+
             if (connectToId) {
               // Auto-connect when someone clicks a shared link
               setTimeout(() => {
@@ -1694,12 +1834,12 @@
                     // Show a modal to save this new contact
                     addContactModal.classList.add('active');
                     contactIdInput.value = connectToId;
-                    
+
                     // Auto-focus the name field
                     setTimeout(() => {
                       contactNameInput.focus();
                     }, 500);
-                    
+
                     // Show a toast
                     showToast('Enter a name for this new contact', 'info');
                   } else {
@@ -1788,12 +1928,82 @@
                     myId = id;
                     yourIdElement.textContent = id;
                     console.log('My peer ID is: ' + id);
-                    
+
+                    // Create a shareable link with the ID embedded
+                    const shareableLink = window.location.origin + window.location.pathname + '?connect=' + id;
+
+                    // Add a prominent share button to the header
+                    const headerTitle = document.querySelector('.app-title');
+                    if (headerTitle) {
+                        const quickShareBtn = document.createElement('button');
+                        quickShareBtn.innerHTML = '🔗 Share';
+                        quickShareBtn.style.background = '#27ae60';
+                        quickShareBtn.style.color = 'white';
+                        quickShareBtn.style.border = 'none';
+                        quickShareBtn.style.borderRadius = '4px';
+                        quickShareBtn.style.padding = '5px 10px';
+                        quickShareBtn.style.marginLeft = '10px';
+                        quickShareBtn.style.cursor = 'pointer';
+                        quickShareBtn.onclick = () => {
+                            // Copy link to clipboard
+                            navigator.clipboard.writeText(shareableLink)
+                                .then(() => {
+                                    showToast('Link copied! Share it to connect instantly', 'success');
+                                })
+                                .catch(err => {
+                                    // Fallback if clipboard API fails
+                                    const textarea = document.createElement('textarea');
+                                    textarea.value = shareableLink;
+                                    document.body.appendChild(textarea);
+                                    textarea.select();
+                                    document.execCommand('copy');
+                                    document.body.removeChild(textarea);
+                                    showToast('Link copied! Share it to connect instantly', 'success');
+                                });
+                        };
+                        headerTitle.parentNode.insertBefore(quickShareBtn, headerTitle.nextSibling);
+                    }
+
                     // Update connection status
                     updateConnectionStatus('Connected to network', true);
-                    
+
                     // Load contacts
                     loadContacts();
+
+                    // Check URL for connection parameters
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const connectToId = urlParams.get('connect');
+
+                    if (connectToId && connectToId !== id) {
+                        // Direct connection from link
+                        showToast('Connecting to contact...', 'info');
+
+                        // Create a temporary contact
+                        const tempContact = {
+                            id: connectToId,
+                            name: 'New Contact',
+                            language: 'en'
+                        };
+
+                        // Add to contacts
+                        storageManager.addContact(tempContact)
+                            .then(() => {
+                                // Connect
+                                connectToPeer(connectToId);
+                                loadContacts();
+                                setActiveContact(connectToId);
+
+                                // Prompt for name
+                                setTimeout(() => {
+                                    const name = prompt('What would you like to name this contact?', 'New Contact');
+                                    if (name) {
+                                        tempContact.name = name;
+                                        storageManager.addContact(tempContact)
+                                            .then(() => loadContacts());
+                                    }
+                                }, 1000);
+                            });
+                    }
                 });
                 
                 peer.on('connection', (conn) => {
