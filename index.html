@@ -1052,7 +1052,7 @@
                 // Scrolling up - show it
                 header.classList.remove('collapsed');
               }
-              
+
               lastScrollTop = scrollTop;
             }, false);
           }
@@ -3212,99 +3212,228 @@
     <script>
         // Wait for document to be fully loaded
         document.addEventListener('DOMContentLoaded', function() {
-          // Fix for invisible text in input
-          const messageInput = document.getElementById('message-input');
-          if (messageInput) {
-            // Force visible styling
-            messageInput.style.color = '#000000';
-            messageInput.style.backgroundColor = '#ffffff';
-            messageInput.style.border = '1px solid #cccccc';
-            messageInput.style.padding = '12px 15px';
-            messageInput.style.fontSize = '16px';
-            messageInput.style.caretColor = '#000000'; // Make cursor visible
-            messageInput.style.opacity = '1';
-            messageInput.style.visibility = 'visible';
-            messageInput.style.display = 'block';
-            messageInput.style.width = '100%';
-            
-            // Fix potential event handling issues
-            messageInput.addEventListener('input', function(e) {
-              console.log('Input detected:', messageInput.value);
-              // Force the input to update its display
-              messageInput.style.display = 'none';
-              setTimeout(() => {
-                messageInput.style.display = 'block';
-                messageInput.focus();
-              }, 10);
-            });
-            
-            // Apply focus when clicking the input area
-            messageInput.addEventListener('click', function() {
-              messageInput.focus();
-            });
-            
-            // Focus the input on page load
-            setTimeout(() => {
-              messageInput.focus();
-              console.log('Input focused');
-              
-              // Send a test character and delete it to "wake up" the input
-              messageInput.value = 'ㅤ'; // Invisible character
-              setTimeout(() => {
-                messageInput.value = '';
-              }, 100);
-            }, 500);
-          }
+        // Fix for invisible text in input
+        const messageInput = document.getElementById('message-input');
+        if (messageInput) {
+          // Force visible styling
+          messageInput.style.color = '#000000';
+          messageInput.style.backgroundColor = '#ffffff';
+          messageInput.style.border = '1px solid #cccccc';
+          messageInput.style.padding = '12px 15px';
+          messageInput.style.fontSize = '16px';
+          messageInput.style.caretColor = '#000000'; // Make cursor visible
+          messageInput.style.opacity = '1';
+          messageInput.style.visibility = 'visible';
+          messageInput.style.display = 'block';
+          messageInput.style.width = '100%';
           
-          // Fix for mobile keyboards
-          document.body.addEventListener('touchstart', function() {
-            if (messageInput) {
-              setTimeout(() => messageInput.focus(), 300);
-            }
+          // Fix potential event handling issues
+          messageInput.addEventListener('input', function(e) {
+            console.log('Input detected:', messageInput.value);
+            // Force the input to update its display
+            messageInput.style.display = 'none';
+            setTimeout(() => {
+              messageInput.style.display = 'block';
+              messageInput.focus();
+            }, 10);
           });
           
-          // Add visual indicator that shows what you're typing
-          const inputArea = document.querySelector('.input-area');
-          if (inputArea) {
-            const typingPreview = document.createElement('div');
-            typingPreview.style.position = 'absolute';
-            typingPreview.style.top = '-25px';
-            typingPreview.style.left = '15px';
-            typingPreview.style.backgroundColor = 'rgba(0,0,0,0.7)';
-            typingPreview.style.color = 'white';
-            typingPreview.style.padding = '3px 8px';
-            typingPreview.style.borderRadius = '10px';
-            typingPreview.style.fontSize = '14px';
-            typingPreview.style.display = 'none';
-            typingPreview.style.maxWidth = '80%';
-            typingPreview.style.overflow = 'hidden';
-            typingPreview.style.textOverflow = 'ellipsis';
-            typingPreview.style.whiteSpace = 'nowrap';
+          // Apply focus when clicking the input area
+          messageInput.addEventListener('click', function() {
+            messageInput.focus();
+          });
+          
+          // Focus the input on page load
+          setTimeout(() => {
+            messageInput.focus();
+            console.log('Input focused');
             
-            inputArea.style.position = 'relative';
-            inputArea.appendChild(typingPreview);
-            
-            // Update the preview as user types
-            if (messageInput) {
-              messageInput.addEventListener('input', function() {
-                if (messageInput.value.length > 0) {
-                  typingPreview.textContent = messageInput.value;
-                  typingPreview.style.display = 'block';
-                } else {
-                  typingPreview.style.display = 'none';
-                }
-              });
-            }
-            
-            // Hide preview when sent
-            const sendButton = document.getElementById('send-btn');
-            if (sendButton) {
-              sendButton.addEventListener('click', function() {
-                typingPreview.style.display = 'none';
-              });
-            }
+            // Send a test character and delete it to "wake up" the input
+            messageInput.value = 'ㅤ'; // Invisible character
+            setTimeout(() => {
+              messageInput.value = '';
+            }, 100);
+          }, 500);
+        }
+        
+        // Fix for mobile keyboards
+        document.body.addEventListener('touchstart', function() {
+          if (messageInput) {
+            setTimeout(() => messageInput.focus(), 300);
           }
         });
+        
+        // Add visual indicator that shows what you're typing
+        const inputArea = document.querySelector('.input-area');
+        if (inputArea) {
+          const typingPreview = document.createElement('div');
+          typingPreview.style.position = 'absolute';
+          typingPreview.style.top = '-25px';
+          typingPreview.style.left = '15px';
+          typingPreview.style.backgroundColor = 'rgba(0,0,0,0.7)';
+          typingPreview.style.color = 'white';
+          typingPreview.style.padding = '3px 8px';
+          typingPreview.style.borderRadius = '10px';
+          typingPreview.style.fontSize = '14px';
+          typingPreview.style.display = 'none';
+          typingPreview.style.maxWidth = '80%';
+          typingPreview.style.overflow = 'hidden';
+          typingPreview.style.textOverflow = 'ellipsis';
+          typingPreview.style.whiteSpace = 'nowrap';
+          
+          inputArea.style.position = 'relative';
+          inputArea.appendChild(typingPreview);
+          
+          // Update the preview as user types
+          if (messageInput) {
+            messageInput.addEventListener('input', function() {
+              if (messageInput.value.length > 0) {
+                typingPreview.textContent = messageInput.value;
+                typingPreview.style.display = 'block';
+              } else {
+                typingPreview.style.display = 'none';
+              }
+            });
+          }
+          
+          // Hide preview when sent
+          const sendButton = document.getElementById('send-btn');
+          if (sendButton) {
+            sendButton.addEventListener('click', function() {
+              typingPreview.style.display = 'none';
+            });
+          }
+        }
+
+        });
+    </script>
+
+    <!-- Add this right before the closing </body> tag -->
+    <script>
+      // Simple test bot that doesn't need direct access to storageManager
+      (function() {
+        // Wait for window to fully load
+        window.addEventListener('load', function() {
+          setTimeout(function() {
+            // Create the test button
+            const testButton = document.createElement('button');
+            testButton.className = 'header-btn';
+            testButton.innerHTML = '🤖';
+            testButton.title = 'Test Mode';
+            testButton.style.fontSize = '16px';
+
+            // Create test message data
+            const testMessages = [
+              "Hello! I'm a test bot. How are you today?",
+              "C'est un plaisir de discuter avec vous!",
+              "Je suis en train de tester l'application TalkWorld.",
+              "Comment ça va aujourd'hui?",
+              "Le temps est magnifique, n'est-ce pas?",
+              "J'adore la traduction automatique!",
+              "Pouvez-vous me comprendre correctement?",
+              "Cette application est très utile pour communiquer."
+            ];
+            let messageIndex = 0;
+
+            // Listen for sent messages to respond to them
+            let isTestModeActive = false;
+            let messageObserver = null;
+
+            // Toggle test mode on button click
+            testButton.addEventListener('click', function() {
+              if (isTestModeActive) {
+                // Disable test mode
+                testButton.style.backgroundColor = '';
+                isTestModeActive = false;
+
+                // Stop monitoring for messages
+                if (messageObserver) {
+                  messageObserver.disconnect();
+                  messageObserver = null;
+                }
+
+                // Show toast message if function exists
+                if (typeof showToast === 'function') {
+                  showToast('Test mode disabled', 'info');
+                } else {
+                  alert('Test mode disabled');
+                }
+              } else {
+                // Enable test mode
+                testButton.style.backgroundColor = '#e74c3c';
+                isTestModeActive = true;
+
+                // Create a manual test contact
+                alert(`Test Mode enabled!\n\nTo simulate a conversation:\n1. Type messages in the chat\n2. The test bot will automatically respond\n3. Click this button again to turn off test mode`);
+
+                // Start observing for new messages to respond to them
+                const messagesContainer = document.querySelector('.messages, #messages-container');
+                if (messagesContainer) {
+                  // Watch for new messages being added
+                  messageObserver = new MutationObserver(function(mutations) {
+                    if (!isTestModeActive) return;
+
+                    mutations.forEach(function(mutation) {
+                      mutation.addedNodes.forEach(function(node) {
+                        // Check if this is a sent message (your message)
+                        if (node.classList && node.classList.contains('message') && 
+                            node.classList.contains('sent')) {
+                            
+                          // Create a bot response after a delay
+                          setTimeout(function() {
+                            // Get next test message
+                            const botMessage = testMessages[messageIndex];
+                            messageIndex = (messageIndex + 1) % testMessages.length;
+
+                            // Create a "received" message manually
+                            const messageElement = document.createElement('div');
+                            messageElement.className = 'message received';
+
+                            const textElement = document.createElement('div');
+                            textElement.className = 'message-content';
+                            textElement.textContent = botMessage;
+                            messageElement.appendChild(textElement);
+
+                            // Add timestamp if the app uses them
+                            const timestampElement = document.createElement('div');
+                            timestampElement.className = 'timestamp';
+                            timestampElement.textContent = new Date().toLocaleTimeString();
+                            messageElement.appendChild(timestampElement);
+
+                            // Add to container
+                            messagesContainer.appendChild(messageElement);
+
+                            // Scroll to bottom
+                            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                          }, 1000 + Math.random() * 2000);
+                        }
+                      });
+                    });
+                  });
+
+                  messageObserver.observe(messagesContainer, { 
+                    childList: true 
+                  });
+                }
+
+                // Show toast message if function exists
+                if (typeof showToast === 'function') {
+                  showToast('Test mode enabled - start typing!', 'success');
+                }
+              }
+            });
+
+            // Add the button to the header
+            const headerActions = document.querySelector('.header-actions');
+            if (headerActions) {
+              headerActions.appendChild(testButton);
+              console.log('Test bot button added successfully');
+            } else {
+              console.error('Could not find .header-actions element');
+            }
+          }, 1000); // Wait a second for everything to initialize
+        });
+      })();
     </script>
 </body>
 </html>
