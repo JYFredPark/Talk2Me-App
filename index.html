@@ -55,25 +55,26 @@
         
         /* Header */
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: var(--primary-color);
-            color: var(--text-light);
-            padding: 8px 10px;
-            z-index: 10;
-            box-shadow: var(--shadow);
-            min-height: 40px;
+            justify-content: ceneter;
         }
         
         .app-title {
-            font-size: 1rem;
-            font-weight: bold;
+            margin: 0 auto;
+            padding: 0 40px;
         }
         
         .header-actions {
+            position: fixed;
+            top: 70px; /* Position below the header */
+            left: 10px;
             display: flex;
-            gap: 5px;
+            flex-direction: column;
+            gap: 10px;
+            background-color: rgba(44, 62, 80, 0.8);
+            padding: 8px;
+            border-radius: 8px;
+            z-index: 90; /* Below sidebar z-index if you have one */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
        
         .header.collapsed {
@@ -684,24 +685,36 @@
         
         /* Desktop adjustments */
         @media (min-width: 768px) {
-            .app-container {
-                flex-direction: row;
-            }
-            
-            .sidebar {
-                position: relative;
-                left: 0;
-                width: 300px;
-                box-shadow: var(--shadow);
-            }
-            
-            .sidebar-close {
-                display: none;
-            }
-            
-            .menu-btn {
-                display: none;
-            }
+          /* When sidebar is open/visible */
+          .sidebar:not(.closed) ~ .main-content .header-actions,
+          .sidebar.open ~ .main-content .header-actions {
+            left: 320px; /* Adjust based on your sidebar width */
+          }
+
+          /* When sidebar is closed */
+          .sidebar.closed ~ .main-content .header-actions {
+            left: 10px;
+          }
+        }
+
+        /* If the sidebar toggle changes visibility of sidebar */
+        .menu-btn {
+          z-index: 100; /* Ensure menu button stays above other elements */
+        }
+
+        /* Make sure icons have consistent size */
+        .header-btn {
+          width: 36px;
+          height: 36px;
+        }
+
+        /* Move header icons when sidebar is open on mobile */
+        @media (max-width: 767px) {
+          .sidebar.open ~ .main-content .header-actions {
+            left: 10px;
+            opacity: 0; /* Hide them when sidebar is open on mobile */
+            pointer-events: none;
+          }
         }
         
         /* Progressive Enhancement - Icons */
@@ -1056,6 +1069,55 @@
               lastScrollTop = scrollTop;
             }, false);
           }
+          // Helper function to handle icon positioning relative to sidebar
+          function updateIconPositioning() {
+            const sidebar = document.querySelector('.sidebar');
+            const headerActions = document.querySelector('.header-actions');
+          
+            if (!sidebar || !headerActions) return;
+          
+            // Initial positioning
+            function updatePosition() {
+              const sidebarIsOpen = sidebar.classList.contains('open') || 
+                                    !sidebar.classList.contains('closed');
+              const sidebarRect = sidebar.getBoundingClientRect();
+              
+              if (sidebarIsOpen && window.innerWidth >= 768) {
+                // If sidebar is open and on desktop
+                headerActions.style.left = (sidebarRect.width + 10) + 'px';
+              } else {
+                // If sidebar is closed or on mobile
+                headerActions.style.left = '10px';
+              }
+            }
+            
+            // Update when sidebar state changes
+            const menuBtn = document.getElementById('menu-btn');
+            const sidebarClose = document.getElementById('sidebar-close');
+            
+            if (menuBtn) {
+              menuBtn.addEventListener('click', function() {
+                // Wait for sidebar animation to complete
+                setTimeout(updatePosition, 300);
+              });
+            }
+            
+            if (sidebarClose) {
+              sidebarClose.addEventListener('click', function() {
+                // Wait for sidebar animation to complete
+                setTimeout(updatePosition, 300);
+              });
+            }
+            
+            // Initial update
+            updatePosition();
+            
+            // Update on window resize
+            window.addEventListener('resize', updatePosition);
+          }
+          
+          // Run the function
+          updateIconPositioning();
         });
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -3159,53 +3221,53 @@
     </script>
 
     <script>
-      // Create a default test contact immediately when app loads
-      document.addEventListener('DOMContentLoaded', async () => {
-        // Wait for storage manager to initialize
-        setTimeout(async () => {
-          try {
-            // Check if we already have contacts
-            const contacts = await storageManager.getContacts();
-
-            if (!contacts || contacts.length === 0) {
-              // Add a welcome/test contact
-              const welcomeContact = {
-                id: 'welcome-bot',
-                name: 'TalkWorld Guide',
-                language: myLanguageSelect.value || 'en'
-              };
-
-              await storageManager.addContact(welcomeContact);
-              await loadContacts();
-
-              // Set as active contact
-              setActiveContact('welcome-bot');
-
-              // Add a welcome message
-              const welcomeMsg = {
-                text: "Welcome to TalkWorld! This is a test chat where you can try the interface. To talk with real people, add their contact ID using the + button in the top right.",
-                isSent: false,
-                senderName: 'TalkWorld Guide',
-                contactId: 'welcome-bot',
-                timestamp: new Date().toISOString()
-              };
-
-              addMessageToChat(welcomeMsg);
-              saveMessage(welcomeMsg);
-
-              // Enable input and focus
-              const messageInput = document.getElementById('message-input');
-              if (messageInput) {
-                messageInput.disabled = false;
-                messageInput.placeholder = "Type here to test the interface...";
-                messageInput.focus();
-              }
-            }
-          } catch (err) {
-            console.error("Error creating welcome contact:", err);
-          }
-        }, 1000);
-      });
+//      // Create a default test contact immediately when app loads
+//      document.addEventListener('DOMContentLoaded', async () => {
+//        // Wait for storage manager to initialize
+//        setTimeout(async () => {
+//          try {
+//            // Check if we already have contacts
+//            const contacts = await storageManager.getContacts();
+//
+//            if (!contacts || contacts.length === 0) {
+//              // Add a welcome/test contact
+//              const welcomeContact = {
+//                id: 'welcome-bot',
+//                name: 'TalkWorld Guide',
+//                language: myLanguageSelect.value || 'en'
+//              };
+//
+//              await storageManager.addContact(welcomeContact);
+//              await loadContacts();
+//
+//              // Set as active contact
+//              setActiveContact('welcome-bot');
+//
+//              // Add a welcome message
+//              const welcomeMsg = {
+//                text: "Welcome to TalkWorld! This is a test chat where you can try the interface. To talk with real people, add their contact ID using the + button in the top right.",
+//                isSent: false,
+//                senderName: 'TalkWorld Guide',
+//                contactId: 'welcome-bot',
+//                timestamp: new Date().toISOString()
+//              };
+//
+//              addMessageToChat(welcomeMsg);
+//              saveMessage(welcomeMsg);
+//
+//              // Enable input and focus
+//              const messageInput = document.getElementById('message-input');
+//              if (messageInput) {
+//                messageInput.disabled = false;
+//                messageInput.placeholder = "Type here to test the interface...";
+//                messageInput.focus();
+//              }
+//            }
+//          } catch (err) {
+//            console.error("Error creating welcome contact:", err);
+//          }
+//        }, 1000);
+//      });
     </script>
 
     <!-- Input Fix Script - Add before </body> tag -->
